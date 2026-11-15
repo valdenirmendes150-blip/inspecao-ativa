@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inspeção Ativa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --bg:#EEF0F2;--surface:#FFFFFF;--surface2:#F6F7F8;--ink:#1E2A33;--muted:#5B6874;--line:#D5DAE0;
+  --ore:#A53D03;--ore-ink:#FFFFFF;--ore-soft:#F6E6DB;
+  --ok:#2E7D4F;--ok-soft:#E1F1E7;--nc:#B3261E;--nc-soft:#F8E1DF;--na:#5F6873;--na-soft:#E6E9EC;
+  --nr:#2F5D7C;--nr-soft:#DDE8F0;--ges:#4F6B2E;--ges-soft:#E5EDDA;
+  --side:#1E2A33;--side-ink:#E8ECEF;--side-muted:#93A1AD;
+  --shadow:0 1px 2px rgba(30,42,51,.08),0 4px 14px rgba(30,42,51,.06);
+  color-scheme:light;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12181D;--surface:#1A2228;--surface2:#212A31;--ink:#E6EAEE;--muted:#9AA6B1;--line:#2E3A44;
+  --ore:#E07A3A;--ore-ink:#1A0E06;--ore-soft:#3A2418;
+  --ok:#5CC08A;--ok-soft:#173222;--nc:#F07468;--nc-soft:#3E1D1A;--na:#A7B1BB;--na-soft:#29323A;
+  --nr:#7FB0D2;--nr-soft:#1C2C38;--ges:#A3C47A;--ges-soft:#232E19;
+  --side:#0E1317;--side-ink:#E6EAEE;--side-muted:#8592A0;--shadow:0 1px 2px rgba(0,0,0,.4);
+  color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#12181D;--surface:#1A2228;--surface2:#212A31;--ink:#E6EAEE;--muted:#9AA6B1;--line:#2E3A44;
+  --ore:#E07A3A;--ore-ink:#1A0E06;--ore-soft:#3A2418;
+  --ok:#5CC08A;--ok-soft:#173222;--nc:#F07468;--nc-soft:#3E1D1A;--na:#A7B1BB;--na-soft:#29323A;
+  --nr:#7FB0D2;--nr-soft:#1C2C38;--ges:#A3C47A;--ges-soft:#232E19;
+  --side:#0E1317;--side-ink:#E6EAEE;--side-muted:#8592A0;--shadow:0 1px 2px rgba(0,0,0,.4);
+  color-scheme:dark;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font:400 15px/1.5 "Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ore);outline-offset:2px}
+h1,h2,h3{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;line-height:1.15;margin:0}
+h1{font-size:30px;letter-spacing:.2px}
+h2{font-size:21px}
+h3{font-size:17px}
+img{max-width:100%}
+.app{display:flex;min-height:100vh}
+/* sidebar */
+.side{width:248px;flex:none;background:var(--side);color:var(--side-ink);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;padding:22px 14px 16px}
+.brand{display:flex;align-items:center;gap:10px;padding:0 8px 22px}
+.brand-mark{width:38px;height:38px;border-radius:9px;background:var(--ore);display:grid;place-items:center;color:#fff}
+.brand b{font-family:"Barlow Condensed",sans-serif;font-size:22px;font-weight:700;display:block;line-height:1}
+.brand small{color:var(--side-muted);font-size:12px}
+.nav-group{margin:6px 0 14px}
+.nav-group p{color:var(--side-muted);font-size:12px;margin:0 10px 6px}
+.nav a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:var(--side-ink);text-decoration:none;font-weight:500}
+.nav a:hover{background:rgba(255,255,255,.06)}
+.nav a.on{background:var(--ore);color:#fff}
+.nav a .ic{width:20px;text-align:center}
+.admin-row{display:flex;gap:6px;padding:10px 8px 0}.admin-row .btn{flex:1;background:transparent;color:var(--side-ink);border-color:rgba(255,255,255,.18);font-size:13px;padding:7px 8px}
+.who{margin-top:auto;border-top:1px solid rgba(255,255,255,.1);padding:14px 8px 0;display:flex;gap:10px;align-items:center}
+.avatar{width:36px;height:36px;border-radius:50%;background:#33434F;display:grid;place-items:center;font-weight:600;flex:none}
+.who-t{min-width:0;flex:1}
+.who-t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.who-t span{font-size:12px;color:var(--side-muted)}
+.icon-btn{background:none;border:0;color:inherit;padding:6px;border-radius:6px}
+.icon-btn:hover{background:rgba(127,127,127,.15)}
+main{flex:1;min-width:0;padding:28px 32px 60px}
+.wrap{max-width:1100px;margin:0 auto}
+/* topbar mobile */
+.topbar{display:none}
+.tabbar{display:none}
+.page-h{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:22px}
+.page-h p{margin:4px 0 0;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 14px;font-weight:600;text-decoration:none;color:var(--ink)}
+.btn:hover{border-color:var(--muted)}
+.btn.pri{background:var(--ore);border-color:var(--ore);color:var(--ore-ink)}
+.btn.pri:hover{filter:brightness(1.07)}
+.btn.danger{color:var(--nc)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:default}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.muted{color:var(--muted)}
+.notice{border-left:4px solid var(--ore);background:var(--ore-soft);padding:12px 14px;border-radius:8px;margin-bottom:18px;font-size:14px}
+/* dashboard */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.kpi{padding:16px 18px}
+.kpi span{font-size:13px;color:var(--muted)}
+.kpi b{display:block;font-family:"Barlow Condensed",sans-serif;font-size:34px;font-weight:600;line-height:1.1;margin-top:4px}
+.kpi.ok b{color:var(--ok)} .kpi.nc b{color:var(--nc)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:18px;margin-bottom:18px}.grid2>*,.kpis>*{min-width:0}
+.panel{padding:18px 20px}
+.panel h2{margin-bottom:12px}
+.bars{display:flex;flex-direction:column;gap:9px}
+.bar{display:grid;grid-template-columns:72px 1fr 44px;gap:10px;align-items:center;font-size:14px}
+.bar .code{font-family:"Barlow Condensed",sans-serif;font-weight:600}
+.bar .track{height:12px;background:var(--surface2);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.bar .fill{height:100%;background:var(--ore);border-radius:6px}
+.bar .fill.ok{background:var(--ok)}
+.bar .v{text-align:right;font-variant-numeric:tabular-nums}
+.toplist{list-style:none;margin:0;padding:0}
+.toplist li{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.toplist li:last-child{border-bottom:0}
+.toplist .n{flex:none;min-width:32px;height:24px;border-radius:12px;background:var(--nc-soft);color:var(--nc);font-weight:700;display:grid;place-items:center;font-size:13px}
+.seg-filter{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
+.seg-filter button{border:0;background:none;padding:7px 12px;font-weight:500;font-size:14px}
+.seg-filter button.on{background:var(--ink);color:var(--surface)}
+.empty{padding:40px 20px;text-align:center}
+.empty h2{margin-bottom:6px}
+.empty p{color:var(--muted);margin:0 auto 16px;max-width:420px}
+/* checklist grid */
+.group-h{display:flex;align-items:baseline;gap:10px;margin:26px 0 12px}
+.group-h:first-of-type{margin-top:4px}
+.group-h span{color:var(--muted);font-size:14px}
+.cl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.cl{position:relative;display:flex;gap:12px;align-items:flex-start;padding:14px 14px 14px 18px;text-decoration:none;color:var(--ink);overflow:hidden;transition:border-color .15s}
+.cl::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--ore)}
+.cl.g-nr::before{background:var(--nr)} .cl.g-gestao::before{background:var(--ges)}
+.cl:hover{border-color:var(--ore)}
+.cl .emo{font-size:24px;line-height:1;margin-top:2px}
+.cl .code{font-family:"Barlow Condensed",sans-serif;font-size:22px;font-weight:700;line-height:1}
+.cl .t{font-size:14px;margin-top:3px;line-height:1.3}
+.cl .meta{font-size:12px;color:var(--muted);margin-top:6px}
+.cl .draft{display:inline-block;margin-left:6px;color:var(--ore);font-weight:600}
+/* form */
+.form-h{display:flex;gap:14px;align-items:center;margin-bottom:18px}
+.form-h .emo{font-size:30px}
+.form-h h1 small{display:block;font-family:"Barlow",sans-serif;font-size:15px;font-weight:500;color:var(--muted);letter-spacing:0}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px 16px;padding:18px 20px;margin-bottom:16px}
+.fld label{display:block;font-size:13px;font-weight:600;margin-bottom:4px}
+.fld label i{color:var(--nc);font-style:normal}
+.inp{width:100%;border:1px solid var(--line);background:var(--surface2);border-radius:8px;padding:9px 11px;min-height:40px}
+.inp:focus{border-color:var(--ore);outline:none;background:var(--surface)}
+textarea.inp{min-height:78px;resize:vertical}
+.fld.full{grid-column:1/-1}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface2);border-radius:20px;padding:5px 11px;font-size:13px}
+.chip.on{background:var(--ore);border-color:var(--ore);color:var(--ore-ink)}
+.miss{border-color:var(--nc)!important;box-shadow:0 0 0 2px var(--nc-soft)}
+.sec{margin-bottom:14px;overflow:hidden}
+.sec-h{display:flex;align-items:center;gap:10px;padding:14px 18px;cursor:pointer;user-select:none;border:0;background:none;width:100%;text-align:left}
+.sec-h h2{flex:1;font-size:19px}
+.sec-h .cnt{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sec-h .cnt .ncb{color:var(--nc);font-weight:700;margin-left:6px}
+.sec-h .chev{transition:transform .2s;color:var(--muted)}
+.sec.closed .chev{transform:rotate(-90deg)}
+.sec.closed .sec-b{display:none}
+.sec-b{border-top:1px solid var(--line)}
+.sec-tools{display:flex;justify-content:flex-end;padding:8px 18px 0}
+.item{padding:12px 18px;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item.is-nc{background:color-mix(in srgb,var(--nc-soft) 55%,transparent)}
+.item-row{display:grid;grid-template-columns:1fr auto;gap:10px 16px;align-items:center}
+.q{margin:0;font-weight:500}
+.ans{display:flex;gap:6px;align-items:center}
+.opt{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;min-width:44px;white-space:nowrap}
+.opt.o0.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.opt.o1.on{background:var(--nc);border-color:var(--nc);color:#fff}
+.opt.o2.on{background:var(--na);border-color:var(--na);color:var(--surface)}
+.tool{border:1px solid var(--line);background:var(--surface);border-radius:8px;width:36px;height:34px;display:grid;place-items:center;position:relative}
+.tool .badge{position:absolute;top:-6px;right:-6px;background:var(--ore);color:#fff;border-radius:9px;font-size:11px;min-width:17px;height:17px;display:grid;place-items:center;padding:0 4px;font-weight:700}
+.extra{margin-top:10px;display:none}
+.extra.show{display:block}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.thumb{position:relative;width:76px;height:76px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--surface2)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.thumb button{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:13px;line-height:1;display:grid;place-items:center}
+.add-ph{width:76px;height:76px;border:1.5px dashed var(--line);border-radius:8px;display:grid;place-items:center;text-align:center;font-size:12px;color:var(--muted);background:none;line-height:1.2}
+.add-ph:hover{border-color:var(--ore);color:var(--ore)}
+.finals{padding:18px 20px;margin-bottom:16px;display:grid;gap:16px}
+.radio-list{display:flex;flex-wrap:wrap;gap:8px}
+.radio-list button{border:1px solid var(--line);background:var(--surface2);border-radius:9px;padding:9px 13px;font-weight:600;font-size:14px;text-align:left}
+.radio-list button.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.savebar{position:sticky;bottom:0;z-index:5;margin:0 -32px -60px;padding:12px 32px calc(12px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex;align-items:center;gap:14px}
+.prog{flex:1;min-width:0}
+.prog .track{height:8px;border-radius:4px;background:var(--surface2);border:1px solid var(--line);overflow:hidden}
+.prog .fill{height:100%;background:var(--ore);transition:width .25s}
+.prog small{display:block;font-size:12px;color:var(--muted);margin-top:4px;font-variant-numeric:tabular-nums}
+/* list */
+.filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.filters .inp{width:auto;min-width:160px;flex:1}
+.filters select.inp{flex:0 1 220px}
+.rows{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:92px 1fr 110px 120px 28px;gap:14px;align-items:center;padding:13px 18px;border-bottom:1px solid var(--line);text-decoration:none;color:var(--ink)}
+.row:last-child{border-bottom:0}
+.row:hover{background:var(--surface2)}
+.row .code{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:19px;line-height:1}
+.row .sub{font-size:13px;color:var(--muted)}
+.row .date{font-variant-numeric:tabular-nums;font-size:14px}
+.pct{font-weight:700;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.nc{background:var(--nc-soft);color:var(--nc)} .pill.warn{background:var(--ore-soft);color:var(--ore)} .pill.na{background:var(--na-soft);color:var(--na)}
+/* detail */
+.det-head{padding:18px 20px;margin-bottom:16px}
+.det-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px 18px;margin-top:14px}
+.det-grid div span{display:block;font-size:12px;color:var(--muted)}
+.det-grid div b{font-weight:600}
+.score{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.score div{font-size:14px} .score b{font-family:"Barlow Condensed",sans-serif;font-size:26px;display:block;line-height:1}
+.ans-list .item-row{grid-template-columns:1fr auto}
+.tag{font-size:13px;font-weight:700;padding:3px 9px;border-radius:7px}
+.tag.o0{background:var(--ok-soft);color:var(--ok)} .tag.o1{background:var(--nc-soft);color:var(--nc)} .tag.o2{background:var(--na-soft);color:var(--na)}
+.note{margin:6px 0 0;font-size:14px;color:var(--muted);white-space:pre-wrap}
+.det-actions{display:flex;flex-wrap:wrap;gap:8px}
+/* modal / toast */
+.modal-bg{position:fixed;inset:0;background:rgba(10,14,18,.55);z-index:50;display:grid;place-items:center;padding:20px}
+.modal{background:var(--surface);color:var(--ink);border-radius:14px;max-width:440px;width:100%;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.modal h2{margin-bottom:8px}
+.modal p{margin:0 0 14px;color:var(--muted)}
+.modal .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:60;display:grid;place-items:center;padding:20px}
+.lightbox img{max-height:90vh;max-width:100%;border-radius:6px}
+.lightbox button{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:14px;background:rgba(255,255,255,.15);color:#fff;border:0;width:40px;height:40px;border-radius:50%;font-size:20px}
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--surface);padding:11px 18px;border-radius:10px;font-weight:500;opacity:0;pointer-events:none;transition:.25s;z-index:70;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.loading{padding:60px;text-align:center;color:var(--muted)}
+@media (max-width:980px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:760px){
+  .side{display:none}
+  .topbar{display:flex;align-items:center;gap:10px;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--side);color:var(--side-ink);padding:10px 14px}
+  .topbar .brand-mark{width:30px;height:30px;border-radius:7px}
+  .topbar b{font-family:"Barlow Condensed",sans-serif;font-size:20px;flex:1}
+  body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--side)}
+  .app{display:block;min-height:0}
+  main{padding:18px 14px 96px}
+  .tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+  .tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 0;color:var(--muted);text-decoration:none;font-size:12px;font-weight:600;border-radius:8px}
+  .tabbar a .ic{font-size:19px;line-height:1.1}
+  .tabbar a.on{color:var(--ore)}
+  body.in-form .tabbar,body.no-tabs .tabbar{display:none}
+  body.no-tabs main{padding-bottom:24px}
+  body.in-form main{padding-bottom:20px}
+  h1{font-size:26px}
+  .kpi b{font-size:28px}
+  .item{padding:12px 14px}
+  .item-row{grid-template-columns:1fr}
+  .ans{flex-wrap:nowrap}
+  .ans .opt{flex:1;padding:9px 4px}
+  .fields,.finals{padding:14px}
+  .sec-h{padding:13px 14px}
+  .savebar{margin:0 -14px -20px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px))}
+  .row{grid-template-columns:1fr auto;gap:4px 10px;padding:12px 14px}
+  .row .c-date{grid-column:1;grid-row:2}
+  .row .c-main{grid-column:1;grid-row:1}
+  .row .c-pct{grid-column:2;grid-row:1;text-align:right}
+  .row .c-res{grid-column:2;grid-row:2;text-align:right}
+  .row .c-ph{display:none}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{
+  .side,.topbar,.tabbar,.savebar,.det-actions,.no-print{display:none!important}
+  body{background:#fff;color:#000}
+  main{padding:0}
+  .card{box-shadow:none;border-color:#ccc}
+  .sec.closed .sec-b{display:block}
+  .item{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><div class="brand-mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l2 2 4-4"/><path d="M5 4h14v14l-7 3-7-3z"/></svg></div><div><b>Inspeção Ativa</b><small>Checklists de SST</small></div></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="who"><div class="avatar" id="who-av">?</div><div class="who-t"><b id="who-name">Inspetor</b><span id="who-sub">Toque para identificar-se</span></div><button class="icon-btn" data-act="profile" aria-label="Editar perfil do inspetor">✎</button></div>
+    <div id="admin-box"></div>
+  </aside>
+  <div class="topbar"><div class="brand-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l2 2 4-4"/><path d="M5 4h14v14l-7 3-7-3z"/></svg></div><b>Inspeção Ativa</b><button class="icon-btn" data-act="profile" aria-label="Perfil do inspetor">👤</button><button class="icon-btn" data-act="gestor" aria-label="Área do gestor" id="top-gestor">🔑</button></div>
+  <main id="view"><div class="loading">Carregando…</div></main>
+</div>
+<nav class="tabbar" id="tabbar"></nav>
+<input type="file" id="file" accept="image/*" multiple hidden>
+<div id="overlay"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+const FORMS = [{"id":"rac-01","code":"RAC 01","title":"Trabalho em Altura","group":"rac","icon":"🧗","opts":["Sim","Não","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Data","type":"date"},{"label":"Matrícula","type":"text"},{"label":"Área Inspecionada","type":"text"}],"sections":[{"name":"Documentação","items":["APR/Análise de Risco elaborada e válida","Permissão de Trabalho (PT) emitida","Equipe treinada em RAC 01","Certificados dentro da validade","Plano de resgate disponível"]},{"name":"Inspeção dos EPIs","items":["Cinturão tipo paraquedista sem danos","Talabarte com absorvedor em boas condições","Trava-quedas inspecionado","Mosquetões funcionando corretamente","Capacete com jugular","Etiquetas dos equipamentos legíveis","Inspeção periódica dos EPIs válida"]},{"name":"Sistema de Ancoragem","items":["Ponto de ancoragem identificado","Ponto suportando carga conforme projeto","Linha de vida inspecionada","Linha de vida sem danos aparentes","Ancoragem acima do trabalhador quando possível"]},{"name":"Local de Trabalho","items":["Área isolada e sinalizada","Piso seguro","Ausência de riscos de queda de materiais","Condições climáticas favoráveis","Iluminação adequada","Rotas de fuga desobstruídas"]},{"name":"Escadas","items":["Escada íntegra","Sapatas antiderrapantes","Fixação adequada","Inclinação correta"]},{"name":"Andaimes","items":["Liberação para uso","Piso completo","Guarda-corpo instalado","Rodapé instalado","Acesso seguro"]},{"name":"Plataforma Elevatória (PEMT)","items":["Checklist diário realizado","Operador autorizado","Controles funcionando","Alarme operacional","Pneus/estabilizadores em boas condições"]},{"name":"Emergência","items":["Plano de resgate conhecido","Equipe treinada para resgate","Equipamentos de resgate disponíveis","Comunicação funcionando"]}],"final":[{"label":"Liberação da atividade","type":"radio","options":["Atividade liberada","Atividade não liberada"]},{"label":"Observação","type":"textarea"}]},{"id":"rac-02","code":"RAC 02","title":"Veículos Automotores","group":"rac","icon":"🚙","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"},{"label":"Veículo","type":"text"},{"label":"Modelo","type":"text"},{"label":"Placa/Prefixo","type":"text"},{"label":"Condutor","type":"text"}],"sections":[{"name":"Documentação","items":["Operador autorizado e habilitado","Treinamento RAC 02 válido","Checklist diário realizado","Plano de manutenção em dia","Equipamento liberado para operação"]},{"name":"Condições Gerais do Veículo","items":["Sem vazamentos de óleo, combustível ou hidráulico","Estrutura sem danos aparentes","Vidros e retrovisores íntegros","Limpadores de para-brisa funcionando","Buzina funcionando","Sistema de direção normal","Sistema de freios operacional","Freio de estacionamento funcionando"]},{"name":"Pneus e Rodados","items":["Pneus em bom estado","Calibragem adequada","Rodas sem trincas ou deformações","Porcas das rodas íntegras"]},{"name":"Sistemas de Segurança","items":["Cinto de segurança em perfeito estado","Alarme de ré funcionando","Luzes de ré funcionando","Giroflex","Faróis e lanternas funcionando","Extintor válido","Kit de emergência disponível"]},{"name":"Cabine do Condutor","items":["Cabine limpa e organizada","Bancos em boas condições","Instrumentos funcionando","Indicadores do painel normais","Rádio/comunicação funcionando"]},{"name":"Área de Circulação","items":["Rotas de circulação definidas","Área sinalizada","Ausência de obstáculos","Iluminação adequada","Condições climáticas favoráveis"]},{"name":"Comportamento Operacional","items":["Uso obrigatório do cinto de segurança","Não utiliza celular durante a operação","Respeita limites de velocidade","Mantém distância segura","Realiza inspeção antes do uso"]}],"final":[{"label":"Resultado da inspeção","type":"radio","options":["Veículo liberado para operação","Veículo interditado"]},{"label":"Observação","type":"textarea"}]},{"id":"rac-03","code":"RAC 03","title":"Equipamentos Móveis","group":"rac","icon":"🚜","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"},{"label":"Equipamento","type":"text"},{"label":"Modelo","type":"text"},{"label":"Prefixo/Placa","type":"text"},{"label":"Operador","type":"text"}],"sections":[{"name":"Documentação","items":["Operador autorizado para o equipamento","CNH compatível (quando aplicável)","Treinamento RAC válido","Checklist diário realizado","Plano de manutenção atualizado","Manual disponível"]},{"name":"Inspeção Geral do Equipamento","items":["Sem vazamentos de óleo","Sem vazamentos hidráulicos","Sem vazamentos de combustível","Estrutura sem trincas ou deformações","Degraus e corrimãos íntegros","Espelhos retrovisores íntegros","Para-brisa sem trincas","Limpadores funcionando"]},{"name":"Sistemas de Segurança","items":["Cinto de segurança funcionando","Alarme de ré operacional","Câmera de ré funcionando","Giroflex operacional","Faróis funcionando","Lanternas funcionando","Luz de freio funcionando","Buzina operacional","Extintor dentro da validade","Kit de emergência disponível"]},{"name":"Sistema Mecânico","items":["Freio de serviço eficiente","Freio de estacionamento eficiente","Direção sem folgas","Pneus em bom estado","Rodas sem danos","Suspensão sem anomalias"]},{"name":"Sistema Hidráulico","items":["Mangueiras sem desgaste","Cilindros íntegros","Implementos fixados corretamente","Movimentos suaves","Travas de segurança funcionando"]},{"name":"Cabine","items":["Banco em boas condições","Painel operacional","Indicadores funcionando","Ar-condicionado/Ventilação funcionando","Rádio de comunicação funcionando","Cabine limpa e organizada"]},{"name":"Área de Operação","items":["Rotas sinalizadas","Área livre de obstáculos","Separação entre pedestres e equipamentos","Controle de velocidade implantado","Boa iluminação","Piso em boas condições"]},{"name":"Comportamento do Operador","items":["Utiliza cinto durante toda a operação","Não utiliza celular","Respeita velocidade permitida","Mantém distância segura","Realiza inspeção antes do uso","Mantém atenção durante a operação"]},{"name":"Controles Críticos RAC","items":["Equipamento possui proteção contra capotamento (ROPS), quando aplicável","Equipamento possui proteção contra queda de objetos (FOPS), quando aplicável","Dispositivos de parada de emergência operacionais","Não há pessoas na zona de risco durante manobras","Manobras realizadas com visibilidade adequada ou auxílio de sinaleiro","Equipamento estacionado em local seguro quando fora de operação","Chave removida e equipamento bloqueado quando necessário"]}],"final":[{"label":"Não conformidades","type":"textarea"},{"label":"Resultado da inspeção","type":"radio","options":["Equipamento LIBERADO","Equipamento LIBERADO COM RESTRIÇÕES","Equipamento INTERDITADO"]},{"label":"Observação","type":"textarea"}]},{"id":"rac-04","code":"RAC 04","title":"Bloqueio e Etiquetagem","group":"rac","icon":"🔒","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"}],"sections":[{"name":"Documentação","items":["Procedimento de bloqueio disponível","Equipe treinada em RAC 04","DDS realizado antes da atividade","Fontes de energia identificadas na APR"]},{"name":"Identificação das Fontes de Energia","items":["Energia elétrica identificada","Energia mecânica identificada","Energia hidráulica identificada","Energia pneumática identificada","Energia térmica identificada","Energia gravitacional identificada","Energia química identificada"]},{"name":"Execução do Bloqueio","items":["Equipamento desligado conforme procedimento","Todas as fontes de energia isoladas","Dispositivos de bloqueio instalados corretamente","Cadeados individuais aplicados","Etiquetas de identificação instaladas","Caixa de bloqueio utilizada","Chaves sob responsabilidade do executor"]},{"name":"Etiquetagem","items":["Etiqueta legível","Nome do responsável informado","Data e horário registrados","Motivo do bloqueio informado","Contato do responsável disponível"]},{"name":"Teste de Zero Energia","items":["Energia residual eliminada","Ausência de tensão confirmada","Pressão hidráulica eliminada","Pressão pneumática eliminada","Partes móveis imobilizadas","Teste funcional realizado","Resultado do teste registrado"]},{"name":"Durante a Execução do Serviço","items":["Bloqueios permaneceram instalados","Não houve remoção indevida de cadeados","Alterações comunicadas ao supervisor","Área mantida isolada","Somente pessoas autorizadas acessaram o local"]},{"name":"Desbloqueio e Retorno à Operação","items":["Serviço concluído","Ferramentas removidas","Proteções reinstaladas","Área limpa e organizada","Todos os trabalhadores fora da zona de risco","Cadeados retirados pelo próprio responsável","Comunicação da liberação realizada","Equipamento testado antes da operação"]},{"name":"Controles Críticos","items":["Existe procedimento específico de bloqueio para o equipamento","Todos os pontos de isolamento foram bloqueados","Não existem energias residuais armazenadas","Cadeados e dispositivos estão identificados","Bloqueios atendem ao procedimento da empresa"]}],"final":[{"label":"Registro de não conformidades","type":"textarea"},{"label":"Resultado da inspeção","type":"radio","options":["Serviço LIBERADO","Serviço LIBERADO COM RESTRIÇÕES","Serviço NÃO LIBERADO"]},{"label":"Observação","type":"textarea"}]},{"id":"rac-05","code":"RAC 05","title":"Içamento de Cargas","group":"rac","icon":"🏗️","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"},{"label":"Equipamento","type":"text"},{"label":"Modelo/Prefixo","type":"text"},{"label":"Operador","type":"text"},{"label":"Sinaleiro/Rigger","type":"text"},{"label":"Supervisor","type":"text"}],"sections":[{"name":"Documentação","items":["Permissão de Trabalho emitida","APR elaborada e aprovada","Operador autorizado","Rigger/Sinaleiro qualificado"]},{"name":"Equipamento de Içamento","items":["Inspeção diária realizada","Certificado de inspeção válido","Limitador de carga funcionando","Indicador de momento de carga operacional","Freios funcionando","Sistema hidráulico sem vazamentos","Cabos de aço sem danos","Gancho com trava de segurança","Polias em boas condições","Patolas estabilizadas e niveladas"]},{"name":"Acessórios de Içamento","items":["Cintas sem cortes ou desgaste","Correntes sem deformações","Manilhas em bom estado","Olhais íntegros","Ganchos sem deformações","Acessórios identificados com capacidade de carga","Inspeção periódica válida"]},{"name":"Carga","items":["Peso conhecido","Centro de gravidade identificado","Amarração correta","Carga estável","Sem risco de desprendimento","Capacidade do equipamento compatível"]},{"name":"Área de Içamento","items":["Área isolada e sinalizada","Piso firme e nivelado","Sem interferências aéreas","Distância segura de redes elétricas","Condições climáticas favoráveis","Iluminação adequada","Rotas de movimentação definidas"]},{"name":"Execução da Operação","items":["Comunicação entre operador e sinaleiro","Sinaleiro posicionado em local seguro","Teste inicial de elevação realizado","Movimentação lenta e controlada","Ninguém sob carga suspensa","Operador mantém visão da carga ou segue orientação do sinaleiro","Paradas de emergência conhecidas"]},{"name":"Controles Críticos","items":["Capacidade nominal do equipamento respeitada","Plano de içamento seguido","Patolas apoiadas corretamente","Área de exclusão respeitada","Não há pessoas sob carga suspensa","Interferências identificadas e controladas","Operação interrompida em caso de condições inseguras"]}],"final":[{"label":"Resultado da inspeção","type":"radio","options":["Atividade Liberada","Atividade Liberada com Restrições","Atividade Não Liberada"]},{"label":"Observação","type":"textarea"}]},{"id":"rac-06","code":"RAC 06","title":"Espaço Confinado","group":"rac","icon":"🕳️","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"},{"label":"Atividade","type":"text"}],"sections":[{"name":"Documentação","items":["ART elaborada e aprovada","Procedimento de trabalho disponível","Equipe treinada para NR-33/RAC 06","Supervisor de Entrada designado","Vigia designado e exclusivo"]},{"name":"Isolamento e Sinalização","items":["Área isolada","Sinalização instalada","Controle de acesso implantado","Riscos identificados e sinalizados"]},{"name":"Bloqueio e Isolamento de Energias","items":["Energia elétrica bloqueada","Energia mecânica bloqueada","Energia hidráulica bloqueada","Energia pneumática bloqueada","Linhas cegadas/desconectadas quando necessário","Bloqueio e etiquetagem conferidos"]},{"name":"Avaliação da Atmosfera","items":["Detector de gases calibrado","Oxigênio dentro dos limites seguros","Gases inflamáveis abaixo do limite permitido","Gases tóxicos dentro dos limites permitidos","Monitoramento contínuo durante a atividade","Registros das medições disponíveis"]},{"name":"Ventilação","items":["Ventilação natural suficiente","Ventilação mecânica instalada","Fluxo de ar adequado","Equipamentos de ventilação em funcionamento"]},{"name":"Equipamentos de Segurança","items":["Tripé ou sistema de resgate instalado","Guincho de resgate operacional","Cinturão tipo paraquedista","Linha de vida instalada","Iluminação adequada","Equipamentos intrinsecamente seguros"]},{"name":"Plano de Emergência e Resgate","items":["Plano de resgate disponível","Equipe de resgate definida","Meios de comunicação funcionando","Ambulância ou suporte definido","Simulado ou treinamento realizado conforme procedimento"]},{"name":"Execução da Atividade","items":["Vigia permaneceu durante toda a atividade","Comunicação permanente entre vigia e trabalhadores","Monitoramento atmosférico contínuo","Não houve alteração das condições de segurança"]}],"final":[{"label":"Resultado da inspeção","type":"radio","options":["Atividade Liberada","Atividade Liberada com Restrições","Atividade Não Liberada"]},{"label":"Observação","type":"textarea"}]},{"id":"rac-07","code":"RAC 07","title":"Proteção de Máquinas","group":"rac","icon":"⚙️","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"}],"sections":[{"name":"Documentação","items":["Inventário da máquina atualizado","Análise de risco da máquina disponível","Procedimento operacional disponível","Manual do fabricante disponível","Plano de manutenção atualizado","Inspeções periódicas registradas"]},{"name":"Proteções Físicas","items":["Proteções fixas instaladas","Proteções móveis funcionando corretamente","Não existem partes móveis expostas","Proteções sem danos ou improvisações","Fixação adequada das proteções","Proteções impedem acesso à zona de risco"]},{"name":"Dispositivos de Segurança","items":["Botão de parada de emergência acessível","Parada de emergência testada","Chaves de segurança funcionando","Intertravamentos operacionais","Cortina de luz (quando aplicável) funcionando","Sensores de segurança operacionais","Comandos bimanuais funcionando (quando aplicável)"]},{"name":"Sistema Elétrico","items":["Painel elétrico identificado","Painel fechado e protegido","Cabos sem danos aparentes","Aterramento adequado","Chave geral identificada","Dispositivos de bloqueio disponíveis"]},{"name":"Operação da Máquina","items":["Operador autorizado","Operador treinado","Procedimento operacional seguido","Não há desativação de dispositivos de segurança","Limpeza realizada com máquina parada","Ajustes realizados com segurança"]},{"name":"Manutenção","items":["Manutenção realizada por pessoal autorizado","Bloqueio e etiquetagem aplicados","Fontes de energia isoladas","Teste de zero energia realizado","Proteções reinstaladas após manutenção"]},{"name":"Sinalização","items":["Placas de advertência visíveis","Identificação dos riscos","Identificação dos comandos","Sinalização de emergência adequada"]}],"final":[{"label":"Resultado da inspeção","type":"radio","options":["Máquina Liberada para Operação","Máquina Liberada com Restrições","Máquina Interditada"]},{"label":"Observação","type":"textarea"}]},{"id":"rac-10","code":"RAC 10","title":"Trabalhos em Eletricidade","group":"rac","icon":"⚡","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"}],"sections":[{"name":"Documentação","items":["Permissão de Trabalho emitida e válida","ART elaborada e aprovada","Procedimento específico disponível","Prontuário das Instalações Elétricas disponível (quando aplicável)","Diagrama elétrico atualizado"]},{"name":"Qualificação da Equipe","items":["Trabalhadores qualificados e autorizados","Capacitação NR-10 válida","Capacitação complementar (SEP, quando aplicável)","Supervisor autorizado","Equipe ciente da ART"]},{"name":"Desenergização e Bloqueio","items":["Circuito corretamente identificado","Equipamento desenergizado","Bloqueio aplicado (LOTOTO)","Etiquetas de bloqueio instaladas","Chaves sob responsabilidade do executor","Todos os pontos de energia isolados"]},{"name":"Teste de Ausência de Tensão","items":["Instrumento testado antes do uso","Ausência de tensão confirmada","Instrumento testado novamente após a medição","Aterramento temporário instalado (quando aplicável)"]},{"name":"Ferramentas e Equipamentos","items":["Ferramentas isoladas e íntegras","Instrumentos calibrados","Escadas adequadas para serviços elétricos","Lanternas de segurança (quando aplicável)","Extintor adequado disponível"]},{"name":"EPIs e EPCs","items":["Capacete classe B com jugular","Vestimenta com proteção contra arco elétrico","Luvas isolantes dentro da validade","Luvas de cobertura","Óculos de segurança","Protetor facial contra arco elétrico","Botina dielétrica","Tapete isolante","Barreiras e sinalização instaladas"]},{"name":"Área de Trabalho","items":["Área isolada e sinalizada","Acesso restrito a pessoas autorizadas","Iluminação adequada"]},{"name":"Execução da Atividade","items":["Procedimento seguido integralmente","Não houve improvisações","Comunicação entre os membros da equipe","Supervisor acompanhando atividade crítica","Alterações de escopo comunicadas"]},{"name":"Reenergização","items":["Ferramentas removidas","Proteções reinstaladas","Equipe fora da zona de risco","Cadeados retirados pelos responsáveis","Comunicação antes da energização","Teste funcional realizado"]}],"final":[{"label":"Resultado da inspeção","type":"radio","options":["Atividade Liberada","Atividade Liberada com Restrições","Atividade Não Liberada"]},{"label":"Observação","type":"textarea"}]},{"id":"rac-12","code":"RAC 12","title":"Trabalhos a Quente","group":"rac","icon":"🔥","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"}],"sections":[{"name":"Documentação","items":["Permissão para Trabalho emitida","ART elaborada e aprovada","Procedimento da atividade disponível"]},{"name":"Inspeção da Área","items":["Área isolada e sinalizada","Piso limpo e organizado","Materiais combustíveis removidos ou protegidos","Materiais inflamáveis afastados","Aberturas protegidas contra queda de fagulhas","Boa ventilação no local","Iluminação adequada"]},{"name":"Prevenção e Combate a Incêndio","items":["Extintor adequado disponível","Extintor dentro da validade","Brigadista ou vigia de incêndio designado","Mangueira/hidrante disponível","Rota de fuga desobstruída","Alarme de emergência acessível"]},{"name":"Equipamentos","items":["Máquina de solda em boas condições","Cabos elétricos íntegros","Porta-eletrodo em bom estado","Aterramento adequado","Reguladores de pressão íntegros","Mangueiras de gases sem vazamentos","Válvulas corta-chama instaladas (oxicorte)","Cilindros fixados adequadamente"]},{"name":"Cilindros de Gases","items":["Cilindros identificados","Capacetes de proteção instalados","Transporte adequado","Oxigênio separado dos combustíveis","Sem vazamentos"]},{"name":"Inspeção Após o Término","items":["Equipamentos desligados","Cilindros fechados","Fontes de ignição eliminadas","Inspeção final da área realizada","Ausência de focos de calor/incêndio","Área liberada pelo responsável"]}],"final":[{"label":"Resultado da inspeção","type":"radio","options":["Atividade Liberada","Atividade Liberada com Restrições","Atividade Não Liberada"]},{"label":"Observação","type":"textarea"}]},{"id":"nr-06","code":"NR 06","title":"Equipamentos de Proteção Individual (EPI)","group":"nr","icon":"🦺","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"}],"sections":[{"name":"Gestão dos EPIs","items":["Existe procedimento para gestão de EPIs","Os riscos da atividade foram avaliados para definição dos EPIs","Os EPIs fornecidos são compatíveis com os riscos","Existe controle de substituição dos EPIs","Há controle de validade dos EPIs"]},{"name":"Certificação dos EPIs","items":["Todos os EPIs possuem Certificado de Aprovação (CA) válido","O CA é compatível com a finalidade de uso","O número do CA está legível no equipamento","O fabricante está identificado"]},{"name":"Inspeção dos EPIs","items":["Capacete sem trincas ou deformações","Jugular em boas condições","Óculos de segurança sem riscos excessivos","Protetor facial íntegro","Protetor auricular em boas condições","Respirador limpo e íntegro","Filtros dentro da validade","Luvas adequadas ao risco","Botinas sem desgaste excessivo","Vestimentas de proteção íntegras","Cinturão de segurança (quando aplicável) sem danos","Talabarte e absorvedor de energia em boas condições"]},{"name":"Utilização dos EPIs","items":["Trabalhadores utilizam os EPIs obrigatórios","Os EPIs estão corretamente ajustados ao usuário","Não há improvisações ou modificações nos EPIs","Os EPIs são utilizados durante toda a atividade","O trabalhador conhece a forma correta de utilização"]},{"name":"Higienização e Conservação","items":["EPIs limpos e higienizados","Local adequado para armazenamento","EPIs protegidos contra umidade e contaminação","EPIs danificados foram substituídos","Há rotina de inspeção dos EPIs"]},{"name":"Treinamento","items":["Trabalhadores receberam treinamento sobre uso dos EPIs","O treinamento contempla limitações dos EPIs","Os trabalhadores sabem inspecionar seus EPIs","Há registros dos treinamentos realizados"]}],"final":[{"label":"Resultado da inspeção","type":"radio","options":["Conforme","Não Conforme"]},{"label":"Observação","type":"textarea"}]},{"id":"nr-10","code":"NR 10","title":"Segurança em Instalações e Serviços em Eletricidade","group":"nr","icon":"⚡","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"}],"sections":[{"name":"Documentação","items":["Permissão de Trabalho (PT) emitida","APR/Análise de Risco elaborada","Procedimento de trabalho disponível","Diagrama unifilar atualizado"]},{"name":"Qualificação e Autorização","items":["Trabalhadores qualificados, capacitados ou legalmente habilitados","Autorização formal para serviços elétricos","Capacitação NR-10 Básico válida","Capacitação NR-10 SEP válida (quando aplicável)","Aptidão médica compatível com a atividade"]},{"name":"Desenergização","items":["Seccionamento realizado","Bloqueio do circuito executado","Etiquetagem aplicada","Ausência de tensão verificada","Aterramento temporário instalado","Proteção de partes energizadas próximas"]},{"name":"Ferramentas e Instrumentos","items":["Ferramentas isoladas e íntegras","Instrumentos de medição calibrados","Detector de tensão adequado","Escadas isolantes em boas condições","Extensão elétrica sem danos"]},{"name":"EPIs","items":["Capacete classe B com jugular","Vestimenta antiarco","Luvas isolantes dentro da validade","Luvas de cobertura","Óculos de segurança","Protetor facial contra arco elétrico","Botina dielétrica","Manga isolante (quando aplicável)"]},{"name":"EPCs","items":["Barreiras de isolamento instaladas","Cones e fitas de sinalização","Mantas isolantes","Sistema de aterramento temporário disponível"]},{"name":"Instalações Elétricas","items":["Painéis elétricos identificados","Painéis fechados e protegidos","Circuitos identificados","Aterramento das instalações adequado","Disjuntores identificados","Ausência de cabos expostos"]},{"name":"Reenergização","items":["Ferramentas retiradas da área","Proteções reinstaladas","Equipe fora da zona de risco","Bloqueios retirados pelos responsáveis","Comunicação antes da energização","Teste funcional realizado"]},{"name":"Plano de Emergência","items":["Plano de emergência disponível","Equipe treinada em primeiros socorros","Equipe treinada em combate a incêndio","Extintores adequados disponíveis","Comunicação de emergência disponível"]}],"final":[{"label":"Resultado da inspeção","type":"radio","options":["Conforme","Conforme com restrições","Não Conforme"]},{"label":"Observação","type":"textarea"}]},{"id":"nr-11","code":"NR 11","title":"Transporte, Movimentação, Armazenagem e Manuseio de Materiais","group":"nr","icon":"📦","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Endereço","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"},{"label":"Equipamento","type":"select","options":["Empilhadeira","Ponte Rolante","Talha","Guindaste","Paleteira","Munck","Outro"]}],"sections":[{"name":"Documentação","items":["Procedimento operacional disponível","APR elaborada (quando aplicável)","Permissão de Trabalho emitida","Plano de movimentação disponível","Registros de inspeção do equipamento atualizados"]},{"name":"Operadores","items":["Operador capacitado e autorizado","Operador apto para a função","Conhece os procedimentos operacionais","Utiliza corretamente os EPIs","Realizou inspeção pré-operacional"]},{"name":"Equipamentos de Movimentação","items":["Equipamento identificado","Capacidade de carga identificada","Sistema de freios funcionando","Buzina operacional","Alarme de ré funcionando (quando aplicável)","Iluminação e sinalização operacional","Pneus ou rodas em boas condições","Sem vazamentos de óleo ou hidráulico","Dispositivos de segurança funcionando","Manutenção preventiva em dia"]},{"name":"Armazenagem de Materiais","items":["Materiais empilhados de forma estável","Limites de altura respeitados","Materiais identificados","Corredores livres e desobstruídos","Distância segura de equipamentos e saídas","Estruturas de armazenagem íntegras"]},{"name":"Transporte e Movimentação","items":["Carga dentro da capacidade do equipamento","Carga corretamente acondicionada","Carga estabilizada durante o transporte","Visibilidade do operador adequada","Rotas de circulação definidas","Segregação entre pedestres e equipamentos","Velocidade compatível com a área","Não há pessoas sob cargas suspensas"]}],"final":[{"label":"Resultado da inspeção","type":"radio","options":["Conforme","Não Conforme","N/A"]},{"label":"Observação","type":"textarea"}]},{"id":"nr-12","code":"NR 12","title":"Segurança no Trabalho em Máquinas e Equipamentos","group":"nr","icon":"⚙️","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"},{"label":"Máquina/Equipamento","type":"text"},{"label":"TAG/Nº Patrimônio","type":"text"},{"label":"Fabricante/Modelo","type":"text"}],"sections":[{"name":"Documentação","items":["Inventário das máquinas atualizado","Apreciação/Análise de Risco disponível","Manual do fabricante disponível","Procedimento operacional disponível","Plano de manutenção preventiva atualizado","Registros de inspeções disponíveis"]},{"name":"Proteções Mecânicas","items":["Proteções fixas instaladas","Proteções móveis em perfeito funcionamento","Proteções sem danos ou improvisações","Partes móveis inacessíveis ao operador","Transmissões mecânicas protegidas","Proteções devidamente fixadas"]},{"name":"Dispositivos de Segurança","items":["Botão de parada de emergência acessível","Parada de emergência testada","Intertravamentos funcionando","Chaves de segurança operacionais","Sensores de segurança funcionando","Cortinas de luz (quando aplicável)","Comando bimanual (quando aplicável)"]},{"name":"Sistema Elétrico","items":["Painel elétrico identificado","Painel protegido e fechado","Cabos elétricos íntegros","Sistema de aterramento adequado","Chave geral identificada","Dispositivos para bloqueio (LOTO) disponíveis"]},{"name":"Operação da Máquina","items":["Operador autorizado","Operador treinado para o equipamento","Procedimento operacional seguido","Não há desativação de dispositivos de segurança","Ajustes realizados conforme procedimento","Limpeza realizada com equipamento seguro"]},{"name":"Manutenção","items":["Manutenção realizada por pessoal autorizado","Bloqueio e etiquetagem aplicados (LOTO)","Todas as fontes de energia isoladas","Verificação de energia zero realizada","Proteções reinstaladas após manutenção"]},{"name":"Sinalização","items":["Placas de advertência instaladas","Identificação dos riscos visível","Comandos identificados","Identificação da máquina legível"]},{"name":"Ergonomia","items":["Posto de operação adequado","Comandos acessíveis ao operador","Boa visibilidade da operação","Esforço físico compatível com a atividade"]},{"name":"Equipamentos de Proteção","items":["EPIs compatíveis com a atividade","EPCs instalados e funcionais","Proteções coletivas preservadas"]}],"final":[{"label":"Resultado da inspeção","type":"radio","options":["Conforme","Não Conforme","N/A"]},{"label":"Observação","type":"textarea"}]},{"id":"nr-23","code":"NR 23","title":"Proteção Contra Incêndios","group":"nr","icon":"🧯","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"}],"sections":[{"name":"Documentação","items":["Plano de Emergência contra Incêndio disponível","Procedimentos de emergência atualizados","Mapa de rota de fuga afixado","Brigada de Incêndio constituída","Registros de inspeção dos equipamentos disponíveis","Simulados de emergência realizados"]},{"name":"Extintores de Incêndio","items":["Quantidade de extintores adequada","Tipo de extintor compatível com o risco","Extintores identificados","Sinalização dos extintores visível","Acesso aos extintores desobstruído","Lacres intactos","Manômetro na faixa operacional","Inspeção mensal realizada"]},{"name":"Saídas de Emergência","items":["Rotas de fuga desobstruídas","Portas de emergência funcionando","Portas abrem no sentido da fuga","Saídas devidamente sinalizadas","Iluminação de emergência funcionando","Piso das rotas em boas condições"]},{"name":"Sinalização de Emergência","items":["Placas de rota de fuga instaladas","Placas dos equipamentos de combate a incêndio","Sinalização visível e conservada","Identificação dos pontos de encontro"]},{"name":"Brigada de Incêndio","items":["Brigadistas identificados","Treinamentos atualizados","Escala de brigadistas disponível","Equipamentos de emergência disponíveis","Conhecimento do plano de emergência"]},{"name":"Produtos Inflamáveis e Combustíveis","items":["Produtos armazenados corretamente","Recipientes identificados","Fontes de ignição controladas","Área ventilada","Quantidade armazenada compatível com o procedimento"]},{"name":"Treinamento dos Trabalhadores","items":["Trabalhadores conhecem as rotas de fuga","Conhecem o ponto de encontro","Sabem acionar o alarme","Sabem utilizar extintores","Conhecem o procedimento de abandono de área"]}],"final":[{"label":"Resultado da inspeção","type":"radio","options":["Conforme","Não Conforme","N/A"]},{"label":"Observação","type":"textarea"}]},{"id":"nr-24","code":"NR 24","title":"Condições Sanitárias e de Conforto nos Locais de Trabalho","group":"nr","icon":"🚿","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"}],"sections":[{"name":"Instalações Sanitárias","items":["Quantidade de sanitários compatível com o número de trabalhadores","Sanitários limpos e higienizados","Vasos sanitários em bom estado","Mictórios em bom estado (quando aplicável)","Lavatórios em quantidade suficiente","Água corrente disponível","Sabonete líquido disponível","Papel higiênico disponível","Papel toalha ou secador de mãos disponível","Lixeiras com tampa e acionamento adequado","Instalações separadas por sexo (quando aplicável)","Ventilação adequada","Iluminação adequada"]},{"name":"Vestiários","items":["Vestiários limpos e organizados","Armários individuais disponíveis","Armários em boas condições","Separação entre roupas limpas e contaminadas (quando aplicável)","Bancos disponíveis","Ventilação adequada","Iluminação adequada"]},{"name":"Chuveiros","items":["Quantidade suficiente de chuveiros","Água disponível","Água aquecida (quando exigida)","Chuveiros em boas condições","Piso antiderrapante","Boa drenagem","Limpeza adequada"]},{"name":"Refeitório","items":["Refeitório limpo e organizado","Mesas e cadeiras em bom estado","Quantidade suficiente de assentos","Água potável disponível","Lixeiras disponíveis","Equipamentos para aquecimento de alimentos","Equipamentos para refrigeração de alimentos","Ventilação adequada","Iluminação adequada","Proibição de refeições em locais impróprios"]},{"name":"Água Potável","items":["Bebedouros em quantidade suficiente","Água potável disponível","Bebedouros limpos","Equipamentos em boas condições","Fácil acesso aos trabalhadores"]},{"name":"Limpeza e Higienização","items":["Programa de limpeza implantado","Produtos de limpeza disponíveis","Coleta de resíduos adequada","Controle de pragas realizado","Ambientes livres de odores desagradáveis"]},{"name":"Áreas de Vivência","items":["Área de descanso disponível","Alojamentos em boas condições","Cozinha adequada","Lavanderia disponível","Condições gerais de higiene"]},{"name":"Acessibilidade","items":["Instalações acessíveis às pessoas com deficiência","Sanitários acessíveis","Circulação sem obstáculos","Sinalização adequada"]}],"final":[{"label":"Resultado da inspeção","type":"radio","options":["Conforme","Não Conforme","N/A"]},{"label":"Observação","type":"textarea"}]},{"id":"nr-33","code":"NR 33","title":"Segurança e Saúde nos Trabalhos em Espaços Confinados","group":"nr","icon":"🕳️","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"}],"sections":[{"name":"Documentação","items":["APR/Análise de Risco elaborada","Procedimento para trabalho em espaço confinado disponível","Cadastro do espaço confinado atualizado","Plano de emergência e resgate disponível"]},{"name":"Equipe","items":["Trabalhadores capacitados conforme NR-33","Supervisor de Entrada capacitado","Vigia capacitado e presente","Equipe ciente dos riscos da atividade","Aptidão médica válida"]},{"name":"Isolamento e Sinalização","items":["Área isolada","Sinalização de advertência instalada","Controle de acesso implantado","Pessoas não autorizadas impedidas de entrar"]},{"name":"Isolamento das Fontes de Energia (LOTO)","items":["Fontes elétricas isoladas","Fontes hidráulicas isoladas","Fontes pneumáticas isoladas","Fontes mecânicas isoladas","Bloqueio e etiquetagem aplicados","Energia zero confirmada"]},{"name":"Avaliação da Atmosfera","items":["Detector multigases calibrado","Teste realizado antes da entrada","Monitoramento contínuo durante a atividade","Oxigênio entre 19,5% e 23%","Gases inflamáveis abaixo dos limites estabelecidos","Contaminantes tóxicos dentro dos limites permitidos"]},{"name":"Ventilação","items":["Ventilação natural suficiente","Ventilação mecânica instalada (quando necessária)","Equipamentos de ventilação funcionando","Renovação contínua do ar"]},{"name":"Comunicação e Resgate","items":["Comunicação permanente entre vigia e trabalhadores","Sistema de comunicação funcionando","Equipe de resgate disponível","Equipamentos de resgate inspecionados","Simulado ou treinamento realizado conforme plano"]}],"final":[{"label":"Resultado da inspeção","type":"radio","options":["Conforme","Não Conforme","N/A"]},{"label":"Observação","type":"textarea"}]},{"id":"nr-34","code":"NR 34","title":"Trabalhos a Quente","group":"nr","icon":"🔥","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"}],"sections":[{"name":"Documentação","items":["Permissão para Trabalho emitida","APR/Análise de Risco aprovada","Procedimento operacional disponível","Equipe autorizada para execução"]},{"name":"Inspeção da Área","items":["Área isolada e sinalizada","Materiais combustíveis removidos ou protegidos","Produtos inflamáveis afastados","Piso limpo e organizado","Boa ventilação no ambiente","Iluminação adequada","Aberturas protegidas contra fagulhas"]},{"name":"Prevenção e Combate a Incêndio","items":["Extintor adequado disponível","Extintor dentro da validade","Brigadista/Vigia de Incêndio designado","Mangueiras e hidrantes acessíveis (quando aplicável)","Rotas de fuga desobstruídas","Sistema de alarme disponível"]},{"name":"Equipamentos","items":["Máquina de solda em boas condições","Cabos elétricos íntegros","Porta-eletrodo em bom estado","Equipamento aterrado","Mangueiras sem vazamentos","Reguladores de pressão em boas condições","Válvulas corta-chama instaladas","Equipamentos inspecionados antes do uso"]},{"name":"Cilindros de Gases","items":["Cilindros identificados","Capacetes de proteção instalados","Oxigênio separado do gás combustível","Transporte adequado","Sem vazamentos nas conexões"]},{"name":"Execução da Atividade","items":["Procedimento seguido integralmente","Não houve improvisações","Comunicação eficiente entre a equipe","Vigia de incêndio permaneceu durante a atividade","Fontes de ignição controladas","Monitoramento contínuo da área"]},{"name":"Inspeção Após o Término","items":["Equipamentos desligados","Cilindros fechados","Área inspecionada após o término","Ausência de brasas ou focos de calor","Limpeza realizada","Área liberada pelo responsável"]}],"final":[{"label":"Resultado da inspeção","type":"radio","options":["Conforme","Não Conforme","N/A"]},{"label":"Observação","type":"textarea"}]},{"id":"nr-35","code":"NR 35","title":"Trabalho em Altura","group":"nr","icon":"🧗","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"}],"sections":[{"name":"Documentação","items":["Permissão de Trabalho emitida","Procedimento de trabalho disponível","Plano de emergência e resgate disponível"]},{"name":"Capacitação e Autorização","items":["Trabalhadores capacitados conforme NR-35","Trabalhadores formalmente autorizados","Aptidão médica válida","Supervisor capacitado presente"]},{"name":"Inspeção da Área","items":["Área isolada e sinalizada","Controle de acesso implantado","Piso de apoio estável","Ausência de interferências elétricas","Condições climáticas favoráveis","Iluminação adequada"]},{"name":"Sistema de Proteção Contra Quedas","items":["Sistema de proteção contra quedas instalado","Linha de vida inspecionada","Pontos de ancoragem identificados","Pontos de ancoragem inspecionados","Guarda-corpo instalado (quando aplicável)","Rodapé instalado (quando aplicável)","Rede de proteção instalada (quando aplicável)"]},{"name":"Equipamentos de Proteção Individual","items":["Capacete com jugular","Cinturão tipo paraquedista","Talabarte com absorvedor de energia","Trava-quedas adequado","Conectores (mosquetões) íntegros","Botina de segurança","Luvas adequadas","EPIs com CA válido e em bom estado"]},{"name":"Equipamentos de Acesso – Escadas","items":["Escada em boas condições","Sapatas antiderrapantes","Escada fixada adequadamente","Inclinação correta"]},{"name":"Equipamentos de Acesso – Andaimes","items":["Andaime montado por trabalhador qualificado","Guarda-corpo e rodapé instalados","Rodízios travados (andaimes móveis)","Liberação para uso identificada"]},{"name":"Equipamentos de Acesso – PEMT","items":["Inspeção pré-operacional realizada","Operador autorizado","Sistema de emergência funcionando","Cinto conectado ao ponto de ancoragem da plataforma"]},{"name":"Resgate e Emergência","items":["Plano de resgate disponível","Equipe treinada para resgate","Equipamentos de resgate disponíveis","Comunicação eficiente durante a atividade","Atendimento de emergência definido"]}],"final":[{"label":"Resultado da inspeção","type":"radio","options":["Conforme","Não Conforme","N/A"]},{"label":"Observação","type":"textarea"}]},{"id":"rec","code":"REC","title":"Registro de Atividades Críticas","group":"gestao","icon":"📋","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"},{"label":"RACs aplicáveis","type":"multi","options":["RAC 01 – Trabalho em Altura","RAC 02 – Veículos Leves","RAC 03 – Equipamentos Móveis","RAC 04 – Bloqueio e Etiquetagem (LOTO)","RAC 05 – Içamento de Cargas","RAC 06 – Espaço Confinado","RAC 07 – Proteção de Máquinas","RAC 08 – Estabilização do Solo","RAC 09 – Explosivos","RAC 10 – Trabalhos em Eletricidade","RAC 11 – Metal Líquido","RAC 12 – Trabalhos a Quente"]}],"sections":[{"name":"Documentação","items":["Procedimentos disponíveis no local","Licenças obrigatórias emitidas","Certificados de inspeção válidos","Certificados de treinamento válidos","Plano de emergência disponível"]},{"name":"Controles Críticos","items":["Riscos críticos identificados","Barreiras de controle implementadas","Fontes de energia isoladas (LOTO)","Equipamentos inspecionados","Ferramentas adequadas","Área isolada e sinalizada","Comunicação entre equipe definida"]},{"name":"Trabalhadores","items":["Trabalhadores autorizados","Capacitação compatível com a atividade","Aptidão médica válida","Conhecimento dos riscos"]},{"name":"Equipamentos e Ferramentas","items":["Equipamentos inspecionados","Ferramentas adequadas","Equipamentos certificados","Dispositivos de segurança funcionando","Instrumentos calibrados"]}],"final":[{"label":"Resultado da inspeção","type":"radio","options":["Conforme","Não Conforme","N/A"]},{"label":"Ver e Agir (observação e intervenção)","type":"textarea"},{"label":"Decisão após o Ver e Agir","type":"radio","options":["Atividade liberada","Atividade liberada após correção dos desvios","Atividade suspensa para eliminação dos riscos","Atividade cancelada"]},{"label":"Observação","type":"textarea"}]},{"id":"dc","code":"DC","title":"Diálogo Comportamental","group":"gestao","icon":"💬","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Trabalhador(es) observado(s)","type":"text"}],"sections":[{"name":"Comportamento Seguro","items":["Demonstra atenção durante a execução da atividade","Cumpre os procedimentos de segurança","Não realiza improvisações","Mantém postura preventiva durante o trabalho","Atua de forma organizada e disciplinada","Comunica riscos e desvios ao líder"]},{"name":"Ver e Agir","items":["Realizou o \"Ver e Agir\" antes de iniciar a atividade","Identificou perigos existentes no local","Confirmou a eficácia dos controles críticos","Interrompeu ou solicitou interrupção diante de condição insegura","Comunicou alterações nas condições da atividade","Incentivou os colegas a trabalhar de forma segura"]},{"name":"Controles Críticos","items":["Os controles críticos estavam implementados","Barreiras de proteção preservadas","Não houve neutralização de dispositivos de segurança","Área isolada e sinalizada","Ferramentas e equipamentos em boas condições"]},{"name":"Uso de EPIs","items":["Capacete utilizado corretamente","Óculos de segurança utilizados","Botina de segurança adequada","Luvas compatíveis com a atividade","Vestimenta adequada","Demais EPIs utilizados corretamente"]},{"name":"Comunicação e Liderança","items":["Comunicação clara entre os integrantes da equipe","Supervisor acompanha a atividade","Dúvidas são esclarecidas antes da execução","Feedbacks são dados de forma respeitosa","A equipe demonstra compromisso com a segurança"]},{"name":"Reconhecimento de Boas Práticas","items":["Demonstrou atitude preventiva","Identificou risco antes da execução","Corrigiu condição insegura","Cumpriu integralmente o procedimento","Exerceu liderança positiva","Comunicou quase acidente ou desvio","Aplicou corretamente o Ver e Agir"]}],"final":[{"label":"Oportunidades de melhoria","type":"textarea"},{"label":"Pontos positivos observados","type":"textarea"},{"label":"Desvios observados","type":"textarea"},{"label":"Orientações fornecidas ao trabalhador","type":"textarea"},{"label":"Compromissos assumidos","type":"textarea"}]},{"id":"5s","code":"5S","title":"Inspeção de 5S","group":"gestao","icon":"🧹","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"}],"sections":[{"name":"Senso de Utilização – Seiri","items":["Materiais sem utilização foram retirados do ambiente","Equipamentos e ferramentas sem uso estão devidamente identificados","Não existem objetos pessoais ou materiais desnecessários espalhados","Os espaços de trabalho estão sendo utilizados adequadamente","Materiais vencidos, danificados ou obsoletos foram destinados corretamente"]},{"name":"Senso de Organização – Seiton","items":["Ferramentas e materiais possuem local definido","Os materiais estão identificados e organizados","Armários, gavetas e prateleiras estão organizados","Documentos estão identificados e armazenados adequadamente","Os corredores e áreas de circulação estão livres","Equipamentos de uso frequente estão em locais de fácil acesso","Há identificação visual dos locais de armazenamento"]},{"name":"Senso de Limpeza – Seiso","items":["O piso encontra-se limpo e sem resíduos","Bancadas e superfícies estão limpas","Equipamentos e ferramentas estão limpos","Não existem resíduos acumulados no ambiente","Lixeiras estão disponíveis, identificadas e em condições adequadas","Os resíduos estão sendo descartados corretamente","Não existem vazamentos, manchas ou sujeiras que possam gerar riscos"]},{"name":"Senso de Padronização – Seiketsu","items":["Os padrões de organização e limpeza estão definidos","Os locais estão identificados conforme o padrão estabelecido","As sinalizações estão visíveis e em boas condições","Os colaboradores conhecem os padrões de 5S do setor","Os padrões de armazenamento estão sendo cumpridos","Os procedimentos e rotinas de limpeza estão definidos","Os itens de segurança estão devidamente sinalizados"]},{"name":"Senso de Disciplina – Shitsuke","items":["Os colaboradores mantêm o ambiente organizado após as atividades","Os padrões de 5S são cumpridos diariamente","Os colaboradores utilizam corretamente os locais destinados aos materiais","As não conformidades identificadas são corrigidas","Existe comprometimento da equipe com o programa 5S","As inspeções de 5S são realizadas conforme o cronograma","As ações corretivas são acompanhadas até sua conclusão"]}],"final":[{"label":"Observação","type":"textarea"}]},{"id":"res","code":"Resíduos","title":"Segregação de Resíduos","group":"gestao","icon":"♻️","opts":["Conforme","Não Conforme","N/A"],"fields":[{"label":"Contrato","type":"text"},{"label":"Nome","type":"text"},{"label":"Matrícula","type":"text"},{"label":"Data","type":"date"},{"label":"Área Inspecionada","type":"text"}],"sections":[{"name":"Identificação e Disponibilidade","items":["Existem coletores de resíduos disponíveis nos locais necessários","Os coletores estão identificados conforme o tipo de resíduo","As cores e identificações dos coletores estão de acordo com o padrão estabelecido","Os coletores possuem identificação visível e legível","A quantidade de coletores é suficiente para atender à demanda do setor","Os coletores estão em boas condições de conservação"]},{"name":"Segregação dos Resíduos","items":["Os resíduos são descartados no coletor correto","Não existem resíduos misturados entre diferentes categorias","Resíduos recicláveis estão separados dos resíduos comuns","Resíduos perigosos estão segregados dos demais resíduos","Resíduos contaminados estão devidamente segregados","Resíduos orgânicos estão destinados corretamente","Resíduos metálicos estão separados conforme procedimento","Embalagens e recipientes contaminados estão destinados corretamente","Não foram identificados resíduos incompatíveis no mesmo recipiente"]},{"name":"Acondicionamento","items":["Os coletores não estão acima da capacidade máxima","Os sacos de acondicionamento estão íntegros e adequados","Os recipientes estão fechados quando necessário","Não existem resíduos espalhados ao redor dos coletores","Os recipientes para resíduos perigosos são adequados ao tipo de resíduo","Não existem vazamentos ou recipientes danificados","Os resíduos estão acondicionados de forma segura para evitar acidentes"]},{"name":"Armazenamento Temporário","items":["A área de armazenamento temporário está devidamente identificada","O local possui acesso controlado quando necessário","Os resíduos estão organizados por tipo","A área encontra-se limpa e organizada","Os resíduos estão protegidos contra chuva e outras intempéries, quando aplicável","Não existem resíduos armazenados diretamente em áreas de circulação","Os resíduos perigosos estão armazenados de forma adequada","Os recipientes estão identificados com o tipo de resíduo e demais informações aplicáveis"]},{"name":"Coleta e Destinação","items":["A coleta dos resíduos ocorre conforme a frequência estabelecida","Os resíduos são encaminhados para o local de destinação adequado","A movimentação dos resíduos é realizada de forma segura","Os responsáveis pela coleta conhecem os procedimentos de segregação","Os resíduos são destinados conforme os requisitos legais e procedimentos internos","Há registro ou controle das retiradas de resíduos, quando aplicável","Não são observados descartes inadequados no ambiente"]},{"name":"Conscientização dos Colaboradores","items":["Os colaboradores conhecem os tipos de resíduos gerados no setor","Os colaboradores sabem identificar o coletor correto para cada resíduo","Foram realizadas orientações ou treinamentos sobre segregação de resíduos","Existem orientações visuais próximas aos pontos de descarte","Os colaboradores demonstram conhecimento sobre a importância da segregação","Os desvios identificados são comunicados e tratados pela equipe"]}],"final":[{"label":"Observação","type":"textarea"}]}];
+const FM = Object.fromEntries(FORMS.map(f=>[f.id,f]));
+const GROUPS=[["rac","RAC – Requisitos de Atividades Críticas"],["nr","Normas Regulamentadoras"],["gestao","Comportamento e gestão"]];
+const MAX_ITEM_PH=4, MAX_GERAL_PH=10;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),2800)}
+const fmtDate=d=>{if(!d)return"—";const [y,m,dd]=String(d).slice(0,10).split("-");return dd?`${dd}/${m}/${y}`:d};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+
+/* ---------- configuração do Supabase ---------- */
+// Preencha com os dados do seu projeto: Supabase > Project Settings > API
+const SUPABASE_URL = "https://rvhywdwrymqfdfkyaxtu.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_GZkc4GpgHpxoQ9QAD-NazQ_0FcCZ5ii";
+const BUCKET = "fotos-inspecoes";
+const CONFIGURED = /^https:\/\//.test(SUPABASE_URL) && SUPABASE_ANON_KEY.length > 30;
+const sb = CONFIGURED && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+const newId=()=>(crypto.randomUUID?crypto.randomUUID():"10000000-1000-4000-8000-100000000000".replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16)));
+
+/* ---------- armazenamento ---------- */
+const Store={
+  list:[],isAdmin:false,email:"",loadedAt:0,listeners:[],
+  async init(){
+    if(!sb)return;
+    const {data}=await sb.auth.getSession();
+    if(data&&data.session)await this.checkAdmin(data.session);
+  },
+  async checkAdmin(session){
+    this.email=session?.user?.email||"";
+    const {data,error}=await sb.rpc("is_admin");
+    this.isAdmin=!error&&data===true;
+    if(this.isAdmin)await this.load();
+    return this.isAdmin;
+  },
+  async login(email,pass){
+    const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+    if(error)throw new Error(/invalid/i.test(error.message)?"E-mail ou senha incorretos.":"Não foi possível entrar. Verifique a conexão.");
+    if(!await this.checkAdmin(data.session)){await sb.auth.signOut();throw new Error("Este usuário não tem acesso de gestor.")}
+  },
+  async logout(){await sb.auth.signOut();this.isAdmin=false;this.list=[];this.email=""},
+  on(fn){this.listeners.push(fn)},
+  emit(){this.listeners.forEach(f=>f())},
+  async load(){
+    if(!this.isAdmin)return;
+    const {data,error}=await sb.from("inspecoes").select("*").order("created_at",{ascending:false}).limit(2000);
+    if(error){toast("Não foi possível carregar as inspeções.");return}
+    this.list=data.map(r=>({id:r.id,formId:r.form_id,createdAt:Date.parse(r.created_at),data:r.data,inspetor:r.inspetor,area:r.area,resultado:r.resultado,c:r.c,nc:r.nc,na:r.na,fields:r.payload.fields||{},answers:r.payload.answers||[],final:r.payload.final||{},ncList:r.payload.ncList||[],fotos:r.fotos||[],nPhotos:(r.fotos||[]).length}));
+    this.loadedAt=Date.now();
+  },
+  async save(rec,photos){
+    if(!sb)throw new Error("App ainda não conectado ao Supabase.");
+    const fotos=[];
+    for(let i=0;i<photos.length;i++){
+      const blob=await (await fetch(photos[i].data)).blob();
+      const path=`${rec.id}/${i}.jpg`;
+      const {error}=await sb.storage.from(BUCKET).upload(path,blob,{contentType:"image/jpeg",upsert:false});
+      if(error)throw new Error(`Falha ao enviar a foto ${i+1}. Verifique o sinal e tente de novo; suas respostas foram mantidas.`);
+      fotos.push({key:photos[i].key,path});
+    }
+    const row={id:rec.id,form_id:rec.formId,data:rec.data||null,inspetor:rec.inspetor,area:rec.area,resultado:rec.resultado,c:rec.c,nc:rec.nc,na:rec.na,payload:{fields:rec.fields,answers:rec.answers,final:rec.final,ncList:rec.ncList},fotos};
+    const {error}=await sb.from("inspecoes").insert(row);
+    if(error)throw new Error("Não foi possível registrar agora. Verifique o sinal e tente de novo; suas respostas foram mantidas.");
+    if(this.isAdmin){rec.fotos=fotos;rec.nPhotos=fotos.length;this.list.unshift(rec)}
+  },
+  async photos(id){
+    const r=this.list.find(x=>x.id===id);if(!r||!r.fotos.length)return[];
+    const {data,error}=await sb.storage.from(BUCKET).createSignedUrls(r.fotos.map(f=>f.path),3600);
+    if(error||!data)return[];
+    return data.map((d,i)=>({key:r.fotos[i].key,data:d.signedUrl})).filter(x=>x.data);
+  },
+  async remove(id){
+    const r=this.list.find(x=>x.id===id);
+    const {error}=await sb.from("inspecoes").delete().eq("id",id);
+    if(error)throw error;
+    if(r&&r.fotos.length)await sb.storage.from(BUCKET).remove(r.fotos.map(f=>f.path));
+    this.list=this.list.filter(x=>x.id!==id);
+  }
+};
+
+/* ---------- perfil ---------- */
+let profile=LS.get("ia_profile",{nome:"",matricula:"",contrato:""});
+function paintProfile(){
+  $("#who-name").textContent=profile.nome||"Inspetor";
+  $("#who-sub").textContent=profile.nome?(profile.matricula?"Matrícula "+profile.matricula:"Inspetor"):"Toque em ✎ para identificar-se";
+  $("#who-av").textContent=(profile.nome||"?").trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase()||"?";
+}
+function openProfile(){
+  modal(`<h2>Identificação do inspetor</h2><p>Esses dados preenchem automaticamente os campos Nome, Matrícula e Contrato de cada checklist.</p>
+  <div class="fld"><label>Nome completo</label><input class="inp" id="p-nome" value="${esc(profile.nome)}"></div>
+  <div class="fld" style="margin-top:10px"><label>Matrícula</label><input class="inp" id="p-mat" value="${esc(profile.matricula)}"></div>
+  <div class="fld" style="margin-top:10px"><label>Contrato</label><input class="inp" id="p-con" value="${esc(profile.contrato)}"></div>
+  <div class="acts"><button class="btn" data-act="close">Cancelar</button><button class="btn pri" data-act="save-profile">Salvar</button></div>`);
+}
+
+/* ---------- modal ---------- */
+function modal(html){$("#overlay").innerHTML=`<div class="modal-bg" data-act="bg"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;const f=$("#overlay input");if(f)f.focus()}
+function closeModal(){$("#overlay").innerHTML=""}
+function lightbox(src){$("#overlay").innerHTML=`<div class="lightbox" data-act="bg"><img src="${src}" alt="Foto da inspeção"><button data-act="close" aria-label="Fechar">✕</button></div>`}
+
+/* ---------- utilidades de resultado ---------- */
+function resultClass(txt){
+  const t=(txt||"").toLowerCase();
+  if(!t)return"na";
+  if(/não liberad|interditad|suspens|cancelad|não conforme|nao conforme/.test(t))return"nc";
+  if(/restri|após correção/.test(t))return"warn";
+  if(/n\/a/.test(t))return"na";
+  return"ok";
+}
+function pctOf(r){const d=r.c+r.nc;return d?Math.round(r.c/d*100):null}
+
+/* ---------- navegação ---------- */
+function paintNav(){
+  const A=Store.isAdmin;
+  $("#nav").innerHTML=(A?`<div class="nav-group"><p>Painel</p><a href="#/dashboard" data-nav="dashboard"><span class="ic">📊</span>Dashboard</a></div>`:"")+
+   `<div class="nav-group"><p>Inspeções</p><a href="#/checklists" data-nav="checklists"><span class="ic">📋</span>Nova inspeção</a>${A?`<a href="#/inspecoes" data-nav="inspecoes"><span class="ic">🔍</span>Inspeções realizadas</a>`:""}</div>`;
+  $("#tabbar").innerHTML=A?`<a href="#/dashboard" data-nav="dashboard"><span class="ic">📊</span>Dashboard</a><a href="#/checklists" data-nav="checklists"><span class="ic">📋</span>Nova</a><a href="#/inspecoes" data-nav="inspecoes"><span class="ic">🔍</span>Realizadas</a><a href="#" data-act="logout"><span class="ic">🚪</span>Sair</a>`:"";
+  document.body.classList.toggle("no-tabs",!A);
+  $("#admin-box").innerHTML=A?`<div class="admin-row"><button class="btn" data-act="logout" title="${esc(Store.email)}">🚪 Sair do modo gestor</button></div>`:`<div class="admin-row"><button class="btn" data-act="gestor">🔑 Área do gestor</button></div>`;
+  $("#top-gestor").style.display=A?"none":"";
+}
+function openLogin(){
+  if(!sb){toast("Configure o Supabase no arquivo antes de entrar.");return}
+  modal(`<h2>Área do gestor</h2><p>Acesso restrito a quem administra as inspeções.</p>
+  <div class="fld"><label for="l-em">E-mail</label><input class="inp" id="l-em" type="email" autocomplete="username"></div>
+  <div class="fld" style="margin-top:10px"><label for="l-pw">Senha</label><input class="inp" id="l-pw" type="password" autocomplete="current-password"></div>
+  <p id="l-err" style="color:var(--nc);margin:10px 0 0;min-height:1.5em"></p>
+  <div class="acts"><button class="btn" data-act="close">Cancelar</button><button class="btn pri" data-act="do-login">Entrar</button></div>`);
+}
+
+/* ---------- roteamento ---------- */
+let cur=null; // estado do formulário em edição
+const ADMIN_PAGES=["dashboard","inspecoes","inspecao"];
+function route(){
+  paintNav();
+  const def=Store.isAdmin?"dashboard":"checklists";
+  const h=location.hash.replace(/^#\/?/,"")||def;
+  let [p,arg]=h.split("/");
+  if(ADMIN_PAGES.includes(p)&&!Store.isAdmin){location.replace("#/checklists");return}
+  document.body.classList.toggle("in-form",p==="form");
+  document.querySelectorAll("[data-nav]").forEach(a=>a.classList.toggle("on",a.dataset.nav===p||(p==="form"&&a.dataset.nav==="checklists")||(p==="inspecao"&&a.dataset.nav==="inspecoes")));
+  if(p!=="form")cur=null;
+  if(!sb)viewSetup();
+  else if(p==="checklists")viewChecklists();
+  else if(p==="form"&&FM[arg])viewForm(arg);
+  else if(p==="enviado")viewSent(arg);
+  else if(p==="inspecoes")withFresh(viewList);
+  else if(p==="inspecao")viewDetail(arg);
+  else if(p==="dashboard")withFresh(viewDash);
+  else location.replace("#/"+def);
+  window.scrollTo(0,0);
+}
+async function withFresh(fn){fn();if(Date.now()-Store.loadedAt>20000){await Store.load();const h=location.hash;if(/dashboard|inspecoes/.test(h))fn()}}
+function viewSetup(){
+  $("#view").innerHTML=`<div class="wrap"><div class="card empty"><h2>Conecte o app ao Supabase</h2><p>Abra o arquivo em um editor de texto, procure por <b>COLE_AQUI</b> e informe a Project URL e a anon public key do seu projeto (Supabase › Project Settings › API).</p></div></div>`;
+}
+function viewSent(code){
+  const f=FM[code];
+  $("#view").innerHTML=`<div class="wrap"><div class="card empty"><div style="font-size:44px">✅</div><h2>Inspeção enviada</h2><p>${f?`O checklist ${esc(f.code)} – ${esc(f.title)} foi registrado com sucesso.`:"O registro foi concluído."}</p><a class="btn pri" href="#/checklists">Fazer nova inspeção</a></div></div>`;
+}
+
+/* ---------- dashboard ---------- */
+let dashRange=30;
+function viewDash(){
+  const now=Date.now();
+  const L=Store.list.filter(r=>!dashRange||now-r.createdAt<=dashRange*864e5);
+  const v=$("#view");
+  const head=`<div class="page-h"><div><h1>Dashboard</h1><p>Visão geral das inspeções registradas.</p></div>
+    <div class="seg-filter" role="group" aria-label="Período">${[[30,"30 dias"],[90,"90 dias"],[0,"Tudo"]].map(([d,l])=>`<button data-act="range" data-d="${d}" class="${dashRange===d?"on":""}">${l}</button>`).join("")}</div></div>`;
+  if(!L.length){v.innerHTML=`<div class="wrap">${head}<div class="card empty"><h2>Nenhuma inspeção no período</h2><p>Escolha um checklist, preencha em campo e registre fotos das condições encontradas.</p><a class="btn pri" href="#/checklists">Iniciar inspeção</a></div></div>`;return}
+  let C=0,NC=0,blocked=0;const byForm={},ncItems={};
+  L.forEach(r=>{C+=r.c;NC+=r.nc;if(resultClass(r.resultado)==="nc")blocked++;
+    const b=byForm[r.formId]||(byForm[r.formId]={n:0,c:0,nc:0});b.n++;b.c+=r.c;b.nc+=r.nc;
+    (r.ncList||[]).forEach(t=>{const k=r.formId+"|"+t;ncItems[k]=(ncItems[k]||0)+1});
+  });
+  const idx=C+NC?Math.round(C/(C+NC)*100):0;
+  const forms=Object.entries(byForm).sort((a,b)=>b[1].n-a[1].n);
+  const maxN=forms[0][1].n;
+  const tops=Object.entries(ncItems).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  v.innerHTML=`<div class="wrap">${head}
+  <div class="kpis">
+    <div class="card kpi"><span>Inspeções realizadas</span><b>${L.length}</b></div>
+    <div class="card kpi ok"><span>Índice de conformidade</span><b>${idx}%</b></div>
+    <div class="card kpi nc"><span>Itens não conformes</span><b>${NC}</b></div>
+    <div class="card kpi"><span>Atividades não liberadas</span><b>${blocked}</b></div>
+  </div>
+  <div class="grid2">
+    <div class="card panel"><h2>Inspeções por checklist</h2><div class="bars">${forms.map(([id,b])=>`<div class="bar"><span class="code">${esc(FM[id]?.code||id)}</span><div class="track"><div class="fill" style="width:${b.n/maxN*100}%"></div></div><span class="v">${b.n}</span></div>`).join("")}</div></div>
+    <div class="card panel"><h2>Conformidade por checklist</h2><div class="bars">${forms.map(([id,b])=>{const p=b.c+b.nc?Math.round(b.c/(b.c+b.nc)*100):0;return`<div class="bar"><span class="code">${esc(FM[id]?.code||id)}</span><div class="track"><div class="fill ok" style="width:${p}%"></div></div><span class="v">${p}%</span></div>`}).join("")}</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card panel"><h2>Desvios mais recorrentes</h2>${tops.length?`<ul class="toplist">${tops.map(([k,n])=>{const[f,t]=k.split("|");return`<li><span class="n">${n}×</span><span><b>${esc(FM[f]?.code||f)}</b> · ${esc(t)}</span></li>`}).join("")}</ul>`:`<p class="muted">Nenhum item não conforme no período.</p>`}</div>
+    <div class="card panel"><h2>Últimas inspeções</h2><div class="rows">${L.slice(0,6).map(rowHtml).join("")}</div><div style="margin-top:12px"><a class="btn sm" href="#/inspecoes">Ver todas</a></div></div>
+  </div></div>`;
+}
+
+/* ---------- checklists ---------- */
+function viewChecklists(){
+  const counts={};Store.list.forEach(r=>counts[r.formId]=(counts[r.formId]||0)+1);
+  $("#view").innerHTML=`<div class="wrap"><div class="page-h"><div><h1>Nova inspeção</h1><p>Escolha o checklist da atividade ou da norma a ser verificada.</p></div></div>
+  ${GROUPS.map(([g,label])=>{const fs=FORMS.filter(f=>f.group===g);return`<div class="group-h"><h2>${label}</h2><span>${fs.length} checklists</span></div>
+  <div class="cl-grid">${fs.map(f=>{const n=f.sections.reduce((a,s)=>a+s.items.length,0);const dr=LS.get("ia_draft_"+f.id,null);return`<a class="card cl g-${f.group}" href="#/form/${f.id}"><span class="emo" aria-hidden="true">${f.icon}</span><div><div class="code">${esc(f.code)}</div><div class="t">${esc(f.title)}</div><div class="meta">${n} itens${counts[f.id]?` · ${counts[f.id]} realizadas`:""}${dr?`<span class="draft">rascunho salvo</span>`:""}</div></div></a>`}).join("")}</div>`}).join("")}</div>`;
+}
+
+/* ---------- formulário ---------- */
+function newState(f){
+  const fields={};f.fields.forEach(fl=>{const l=fl.label.toLowerCase();fields[fl.label]=fl.type==="multi"?[]:fl.type==="date"?today():l==="nome"?profile.nome:l==="matrícula"?profile.matricula:l==="contrato"?profile.contrato:""});
+  return{formId:f.id,fields,ans:{},notes:{},photos:{},final:{},open:{}};
+}
+function viewForm(id){
+  const f=FM[id];
+  if(!cur||cur.formId!==id){
+    const dr=LS.get("ia_draft_"+id,null);
+    cur=dr||newState(f);
+    if(dr)setTimeout(()=>toast("Rascunho recuperado"),300);
+  }
+  renderForm();
+}
+function totals(f,st){let tot=0,done=0,c=0,nc=0,na=0;f.sections.forEach((s,si)=>s.items.forEach((_,ii)=>{tot++;const a=st.ans[si+"-"+ii];if(a!=null){done++;a===0?c++:a===1?nc++:na++}}));return{tot,done,c,nc,na}}
+function renderForm(){
+  const f=FM[cur.formId],st=cur;
+  const T=totals(f,st);
+  const fieldHtml=f.fields.map((fl,fi)=>{
+    const v=st.fields[fl.label];
+    if(fl.type==="multi")return`<div class="fld full"><label>${esc(fl.label)} <i>*</i></label><div class="chips" data-multi="${fi}">${fl.options.map((o,oi)=>`<button type="button" class="chip ${v.includes(o)?"on":""}" data-act="multi" data-fi="${fi}" data-oi="${oi}">${esc(o)}</button>`).join("")}</div></div>`;
+    if(fl.type==="select")return`<div class="fld"><label for="f${fi}">${esc(fl.label)} <i>*</i></label><select class="inp" id="f${fi}" data-field="${esc(fl.label)}"><option value="">Selecione…</option>${fl.options.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select></div>`;
+    return`<div class="fld"><label for="f${fi}">${esc(fl.label)} <i>*</i></label><input class="inp" id="f${fi}" type="${fl.type==="date"?"date":"text"}" data-field="${esc(fl.label)}" value="${esc(v)}"></div>`;
+  }).join("");
+  const secs=f.sections.map((s,si)=>{
+    let d=0,n=0;s.items.forEach((_,ii)=>{const a=st.ans[si+"-"+ii];if(a!=null)d++;if(a===1)n++});
+    const closed=st.open[si]===false;
+    return`<section class="card sec ${closed?"closed":""}" data-si="${si}"><button type="button" class="sec-h" data-act="toggle-sec" data-si="${si}" aria-expanded="${!closed}"><h2>${esc(s.name)}</h2><span class="cnt" id="cnt-${si}">${d}/${s.items.length}${n?`<span class="ncb">${n} NC</span>`:""}</span><span class="chev">▾</span></button>
+    <div class="sec-b"><div class="sec-tools"><button type="button" class="btn sm" data-act="all-ok" data-si="${si}">Marcar pendentes como ${esc(f.opts[0])}</button></div>${s.items.map((q,ii)=>itemHtml(f,st,si,ii,q)).join("")}</div></section>`;
+  }).join("");
+  const finals=f.final.map((fl,i)=>fl.type==="radio"
+    ?`<div class="fld" data-final="${i}"><label>${esc(fl.label)} <i>*</i></label><div class="radio-list">${fl.options.map((o,oi)=>`<button type="button" class="${st.final[fl.label]===o?"on":""}" data-act="final" data-i="${i}" data-oi="${oi}">${esc(o)}</button>`).join("")}</div></div>`
+    :`<div class="fld" data-final="${i}"><label for="fin${i}">${esc(fl.label)} <i>*</i></label><textarea class="inp" id="fin${i}" data-finaltext="${esc(fl.label)}" placeholder="Descreva aqui. Se não houver, escreva “Sem observações”.">${esc(st.final[fl.label]||"")}</textarea></div>`).join("");
+  const gp=st.photos.geral||[];
+  $("#view").innerHTML=`<div class="wrap">
+    <div class="form-h"><a class="btn sm no-print" href="#/checklists" aria-label="Voltar">←</a><span class="emo" aria-hidden="true">${f.icon}</span><h1>${esc(f.code)}<small>${esc(f.title)}</small></h1></div>
+    <div class="card fields">${fieldHtml}</div>
+    ${secs}
+    <div class="card finals"><h2>Fechamento</h2>${finals}
+      <div class="fld"><label>Fotos gerais da inspeção</label><div class="thumbs" id="th-geral">${thumbs("geral",gp,MAX_GERAL_PH)}</div></div>
+    </div>
+    <div class="savebar"><button class="btn sm" data-act="discard">Descartar</button><div class="prog"><div class="track"><div class="fill" id="pfill" style="width:${T.done/T.tot*100}%"></div></div><small id="ptxt">${progTxt(T)}</small></div><button class="btn pri" data-act="submit">Registrar inspeção</button></div>
+  </div>`;
+}
+function progTxt(T){return`${T.done} de ${T.tot} itens · ${T.c} conforme · ${T.nc} não conforme · ${T.na} N/A`}
+function itemHtml(f,st,si,ii,q){
+  const k=si+"-"+ii,a=st.ans[k],ph=st.photos[k]||[],note=st.notes[k]||"";
+  const showExtra=a===1||ph.length||note||st.open["x"+k];
+  return`<div class="item ${a===1?"is-nc":""}" data-k="${k}" id="it-${k}"><div class="item-row"><p class="q">${esc(q)}</p>
+  <div class="ans">${f.opts.map((o,oi)=>`<button type="button" class="opt o${oi} ${a===oi?"on":""}" data-act="ans" data-k="${k}" data-oi="${oi}" aria-pressed="${a===oi}">${esc(o)}</button>`).join("")}
+  <button type="button" class="tool" data-act="extra" data-k="${k}" aria-label="Foto e comentário">📷${ph.length?`<span class="badge">${ph.length}</span>`:""}</button></div></div>
+  <div class="extra ${showExtra?"show":""}"><textarea class="inp" data-note="${k}" placeholder="${a===1?"Descreva o desvio e a ação imediata":"Comentário (opcional)"}" rows="2" style="min-height:56px">${esc(note)}</textarea><div class="thumbs" id="th-${k}">${thumbs(k,ph,MAX_ITEM_PH)}</div></div></div>`;
+}
+function thumbs(k,arr,max){
+  return arr.map((src,i)=>`<div class="thumb"><img src="${src}" alt="Foto ${i+1}" data-act="zoom"><button type="button" data-act="rm-ph" data-k="${k}" data-i="${i}" aria-label="Remover foto">✕</button></div>`).join("")+(arr.length<max?`<button type="button" class="add-ph" data-act="add-ph" data-k="${k}">＋<br>Foto</button>`:"");
+}
+function refreshItem(k){
+  const f=FM[cur.formId];const [si,ii]=k.split("-").map(Number);
+  const el=document.getElementById("it-"+k);if(!el)return;
+  el.outerHTML=itemHtml(f,cur,si,ii,f.sections[si].items[ii]);
+  refreshCounts(si);
+}
+function refreshCounts(si){
+  const f=FM[cur.formId],s=f.sections[si];let d=0,n=0;
+  s.items.forEach((_,ii)=>{const a=cur.ans[si+"-"+ii];if(a!=null)d++;if(a===1)n++});
+  const c=document.getElementById("cnt-"+si);if(c)c.innerHTML=`${d}/${s.items.length}${n?`<span class="ncb">${n} NC</span>`:""}`;
+  const T=totals(f,cur);const pf=$("#pfill");if(pf){pf.style.width=T.done/T.tot*100+"%";$("#ptxt").textContent=progTxt(T)}
+}
+let draftTimer;
+function saveDraft(){clearTimeout(draftTimer);draftTimer=setTimeout(()=>{if(!cur)return;if(!LS.set("ia_draft_"+cur.formId,cur)){const c={...cur,photos:{}};LS.set("ia_draft_"+cur.formId,c)}},600)}
+
+/* compressão de fotos */
+async function loadBitmap(file){
+  try{return await createImageBitmap(file,{imageOrientation:"from-image"})}catch(e){}
+  return await new Promise((res,rej)=>{const u=URL.createObjectURL(file);const i=new Image();i.onload=()=>{res(i)};i.onerror=rej;i.src=u});
+}
+async function compress(file){
+  const img=await loadBitmap(file);
+  let max=1280,q=.72,url="";
+  for(let tries=0;tries<8;tries++){
+    const sc=Math.min(1,max/Math.max(img.width,img.height));
+    const c=document.createElement("canvas");c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    url=c.toDataURL("image/jpeg",q);
+    if(url.length<170000)break;
+    if(q>.5)q-=.1;else max=Math.round(max*.8);
+  }
+  return url;
+}
+let phTarget=null;
+$("#file").addEventListener("change",async e=>{
+  const files=[...e.target.files];e.target.value="";if(!cur||!phTarget||!files.length)return;
+  const k=phTarget,max=k==="geral"?MAX_GERAL_PH:MAX_ITEM_PH;
+  const arr=cur.photos[k]||(cur.photos[k]=[]);
+  const room=max-arr.length;if(files.length>room)toast(`Limite de ${max} fotos ${k==="geral"?"gerais":"por item"}.`);
+  for(const fl of files.slice(0,room)){try{arr.push(await compress(fl))}catch(err){toast("Não foi possível ler essa imagem.")}}
+  if(k==="geral")$("#th-geral").innerHTML=thumbs("geral",arr,MAX_GERAL_PH);else{cur.open["x"+k]=true;refreshItem(k)}
+  saveDraft();
+});
+
+function validate(f,st){
+  const miss=[];
+  f.fields.forEach((fl,fi)=>{const v=st.fields[fl.label];if(fl.type==="multi"?!v.length:!String(v||"").trim())miss.push(fl.type==="multi"?`[data-multi="${fi}"]`:"#f"+fi)});
+  f.sections.forEach((s,si)=>s.items.forEach((_,ii)=>{if(st.ans[si+"-"+ii]==null)miss.push("#it-"+si+"-"+ii)}));
+  f.final.forEach((fl,i)=>{if(!String(st.final[fl.label]||"").trim())miss.push(fl.type==="radio"?`[data-final="${i}"] .radio-list`:"#fin"+i)});
+  return miss;
+}
+async function submit(btn){
+  const f=FM[cur.formId],st=cur;
+  document.querySelectorAll(".miss").forEach(e=>e.classList.remove("miss"));
+  const miss=validate(f,st);
+  if(miss.length){
+    // abrir seções com pendências
+    f.sections.forEach((s,si)=>{if(s.items.some((_,ii)=>st.ans[si+"-"+ii]==null)&&st.open[si]===false){st.open[si]=true;const el=document.querySelector(`.sec[data-si="${si}"]`);el&&el.classList.remove("closed")}});
+    miss.forEach(s=>{const e=document.querySelector(s);e&&e.classList.add("miss")});
+    const first=document.querySelector(miss[0]);first&&first.scrollIntoView({behavior:"smooth",block:"center"});
+    toast(`Faltam ${miss.length} ${miss.length>1?"respostas obrigatórias":"resposta obrigatória"}.`);return;
+  }
+  const T=totals(f,st);
+  const ncList=[],answers=[];
+  f.sections.forEach((s,si)=>s.items.forEach((q,ii)=>{const k=si+"-"+ii,a=st.ans[k];answers.push({k,a,note:st.notes[k]||""});if(a===1)ncList.push(q)}));
+  const radios=f.final.filter(x=>x.type==="radio");
+  const resultado=radios.length?st.final[(radios.find(x=>/resultado|decis|libera/i.test(x.label))||radios[0]).label]:(T.nc?"Não Conforme":"Conforme");
+  const photos=[];Object.entries(st.photos).forEach(([k,arr])=>arr.forEach(d=>photos.push({key:k,data:d})));
+  const area=st.fields["Área Inspecionada"]||st.fields["Trabalhador(es) observado(s)"]||"";
+  const rec={id:newId(),formId:f.id,createdAt:Date.now(),data:st.fields["Data"]||today(),inspetor:st.fields["Nome"]||"",area,fields:st.fields,answers,final:st.final,c:T.c,nc:T.nc,na:T.na,ncList,resultado,nPhotos:photos.length};
+  btn.disabled=true;btn.textContent="Salvando…";
+  try{
+    await Store.save(rec,photos);
+    profile={nome:st.fields["Nome"]||profile.nome,matricula:st.fields["Matrícula"]||profile.matricula,contrato:st.fields["Contrato"]||profile.contrato};LS.set("ia_profile",profile);paintProfile();
+    LS.del("ia_draft_"+f.id);cur=null;
+    toast("Inspeção registrada");location.hash=Store.isAdmin?"#/inspecao/"+rec.id:"#/enviado/"+f.id;
+  }catch(e){btn.disabled=false;btn.textContent="Registrar inspeção";toast(e.message||"Erro ao salvar.")}
+}
+
+/* ---------- lista ---------- */
+let flt={q:"",form:"",res:""};
+function rowHtml(r){
+  const f=FM[r.formId],p=pctOf(r),rc=resultClass(r.resultado);
+  return`<a class="row" href="#/inspecao/${r.id}"><span class="c-date date">${fmtDate(r.data)}</span><span class="c-main"><span class="code">${esc(f?.code||r.formId)}</span> <span class="sub">${esc(r.area||f?.title||"")}${r.inspetor?" · "+esc(r.inspetor):""}</span></span><span class="c-pct pct" style="color:var(--${p==null?"muted":p>=90?"ok":p>=70?"ore":"nc"})">${p==null?"—":p+"%"}</span><span class="c-res"><span class="pill ${rc}">${esc(r.resultado||"—")}</span></span><span class="c-ph muted" title="Fotos">${r.nPhotos?"📷"+r.nPhotos:""}</span></a>`;
+}
+function viewList(){
+  const v=$("#view");
+  const q=flt.q.toLowerCase();
+  const L=Store.list.filter(r=>(!flt.form||r.formId===flt.form)&&(!flt.res||resultClass(r.resultado)===flt.res)&&(!q||[r.area,r.inspetor,FM[r.formId]?.code,FM[r.formId]?.title,r.resultado,JSON.stringify(r.fields)].join(" ").toLowerCase().includes(q)));
+  v.innerHTML=`<div class="wrap"><div class="page-h"><div><h1>Inspeções realizadas</h1><p>${Store.list.length} registro${Store.list.length===1?"":"s"}.</p></div>
+  <div class="det-actions"><button class="btn" data-act="refresh">Atualizar</button><button class="btn" data-act="csv" ${Store.list.length?"":"disabled"}>Exportar planilha (CSV)</button><a class="btn pri" href="#/checklists">Nova inspeção</a></div></div>
+  
+  <div class="filters"><input class="inp" id="q" placeholder="Buscar por área, inspetor, equipamento…" value="${esc(flt.q)}">
+  <select class="inp" id="ff"><option value="">Todos os checklists</option>${FORMS.map(f=>`<option value="${f.id}" ${flt.form===f.id?"selected":""}>${esc(f.code)} – ${esc(f.title)}</option>`).join("")}</select>
+  <select class="inp" id="fr"><option value="">Todos os resultados</option><option value="ok" ${flt.res==="ok"?"selected":""}>Liberado / Conforme</option><option value="warn" ${flt.res==="warn"?"selected":""}>Com restrições</option><option value="nc" ${flt.res==="nc"?"selected":""}>Não liberado / Não conforme</option></select></div>
+  ${L.length?`<div class="card rows">${L.map(rowHtml).join("")}</div>`:`<div class="card empty"><h2>${Store.list.length?"Nenhum resultado para esse filtro":"Nenhuma inspeção registrada"}</h2><p>${Store.list.length?"Ajuste a busca ou limpe os filtros.":"As inspeções concluídas aparecem aqui com fotos, desvios e resultado."}</p>${Store.list.length?"":`<a class="btn pri" href="#/checklists">Iniciar inspeção</a>`}</div>`}</div>`;
+  const qi=$("#q");qi.addEventListener("input",()=>{flt.q=qi.value;clearTimeout(qi._t);qi._t=setTimeout(()=>{const pos=qi.selectionStart;viewList();const n=$("#q");n.focus();n.setSelectionRange(pos,pos)},250)});
+  $("#ff").addEventListener("change",e=>{flt.form=e.target.value;viewList()});
+  $("#fr").addEventListener("change",e=>{flt.res=e.target.value;viewList()});
+}
+
+/* ---------- detalhe ---------- */
+async function viewDetail(id){
+  const r=Store.list.find(x=>x.id===id);const v=$("#view");
+  if(!r){v.innerHTML=`<div class="wrap"><div class="card empty"><h2>Inspeção não encontrada</h2><p>Ela pode ter sido excluída.</p><a class="btn" href="#/inspecoes">Voltar à lista</a></div></div>`;return}
+  const f=FM[r.formId];const p=pctOf(r);
+  v.innerHTML=detailHtml(r,f,p,null,true);
+  const ph=r.nPhotos?await Store.photos(id):[];
+  if(location.hash!=="#/inspecao/"+id)return;
+  v.innerHTML=detailHtml(r,f,p,ph,false);
+}
+function detailHtml(r,f,p,photos,loading){
+  const byKey={};(photos||[]).forEach(x=>(byKey[x.key]=byKey[x.key]||[]).push(x.data));
+  const ans=Object.fromEntries((r.answers||[]).map(a=>[a.k,a]));
+  const imgs=k=>(byKey[k]||[]).length?`<div class="thumbs">${byKey[k].map(s=>`<div class="thumb"><img src="${s}" alt="Foto" data-act="zoom"></div>`).join("")}</div>`:"";
+  return`<div class="wrap">
+  <div class="page-h no-print"><a class="btn sm" href="#/inspecoes">← Inspeções</a><div class="det-actions"><button class="btn" data-act="report" data-id="${r.id}">Baixar relatório</button><button class="btn" data-act="print">Imprimir / PDF</button><button class="btn danger" data-act="del" data-id="${r.id}">Excluir</button></div></div>
+  <div class="card det-head"><div class="form-h" style="margin:0"><span class="emo" aria-hidden="true">${f.icon}</span><h1>${esc(f.code)}<small>${esc(f.title)}</small></h1></div>
+  <div class="det-grid">${Object.entries(r.fields).map(([k,v])=>`<div><span>${esc(k)}</span><b>${esc(Array.isArray(v)?v.join(", "):k==="Data"?fmtDate(v):v)||"—"}</b></div>`).join("")}</div>
+  <div class="score"><div><b style="color:var(--ok)">${r.c}</b>${esc(f.opts[0])}</div><div><b style="color:var(--nc)">${r.nc}</b>${esc(f.opts[1])}</div><div><b>${r.na}</b>N/A</div><div><b>${p==null?"—":p+"%"}</b>Conformidade</div><div><span class="pill ${resultClass(r.resultado)}" style="font-size:14px;margin-top:6px">${esc(r.resultado||"—")}</span></div></div></div>
+  ${r.nc?`<div class="card sec"><div class="sec-h" style="cursor:default"><h2 style="color:var(--nc)">Itens não conformes</h2><span class="cnt">${r.nc}</span></div><div class="sec-b">${f.sections.map((s,si)=>s.items.map((q,ii)=>{const k=si+"-"+ii,a=ans[k];return a&&a.a===1?`<div class="item is-nc"><div class="item-row"><p class="q"><span class="muted">${esc(s.name)} ·</span> ${esc(q)}</p></div>${a.note?`<p class="note">${esc(a.note)}</p>`:""}${imgs(k)}</div>`:""}).join("")).join("")}</div></div>`:""}
+  ${f.sections.map((s,si)=>`<div class="card sec closed" data-si="d${si}"><button type="button" class="sec-h" data-act="toggle-dsec"><h2>${esc(s.name)}</h2><span class="cnt">${s.items.filter((_,ii)=>ans[si+"-"+ii]?.a===1).length?`<span class="ncb">${s.items.filter((_,ii)=>ans[si+"-"+ii]?.a===1).length} NC</span>`:"Sem desvios"}</span><span class="chev">▾</span></button><div class="sec-b ans-list">${s.items.map((q,ii)=>{const k=si+"-"+ii,a=ans[k];return`<div class="item"><div class="item-row"><p class="q">${esc(q)}</p><span class="tag o${a?.a??2}">${a&&a.a!=null?esc(f.opts[a.a]):"—"}</span></div>${a?.note&&a.a!==1?`<p class="note">${esc(a.note)}</p>`:""}${a?.a!==1?imgs(k):""}</div>`}).join("")}</div></div>`).join("")}
+  <div class="card finals"><h2>Fechamento</h2>${f.final.map(fl=>`<div><span class="muted" style="font-size:13px">${esc(fl.label)}</span><div style="white-space:pre-wrap;font-weight:500">${esc(r.final[fl.label]||"—")}</div></div>`).join("")}
+  ${loading?`<p class="muted">Carregando fotos…</p>`:(byKey.geral||[]).length?`<div><span class="muted" style="font-size:13px">Fotos gerais</span>${imgs("geral")}</div>`:""}</div>
+  <p class="muted" style="font-size:13px">Registrado em ${new Date(r.createdAt).toLocaleString("pt-BR")}</p></div>`;
+}
+
+/* ---------- exportação ---------- */
+async function saveFile(filename,content,mime){
+  let dl=null;try{dl=window.claude&&claude.use?await claude.use("downloads"):null}catch(e){}
+  const blob=new Blob([content],{type:mime});
+  if(dl){try{await dl.save({filename,data:blob});return}catch(e){if(e&&e.code==="declined")return;}}
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+}
+function csvCell(v){v=String(v??"");return/[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
+async function exportCsv(){
+  const head=["Data","Checklist","Título","Área","Inspetor","Matrícula","Contrato","Conformes","Não conformes","N/A","Conformidade %","Resultado","Itens não conformes","Fotos"];
+  const lines=[head.join(";")].concat(Store.list.map(r=>{const f=FM[r.formId];return[fmtDate(r.data),f?.code,f?.title,r.area,r.inspetor,r.fields?.["Matrícula"],r.fields?.["Contrato"],r.c,r.nc,r.na,pctOf(r)??"",r.resultado,(r.ncList||[]).join(" | "),r.nPhotos].map(csvCell).join(";")}));
+  await saveFile(`inspecoes_${today()}.csv`,"\ufeff"+lines.join("\r\n"),"text/csv;charset=utf-8");
+}
+async function exportReport(id){
+  const r=Store.list.find(x=>x.id===id);if(!r)return;const f=FM[r.formId];
+  toast("Gerando relatório…");
+  const photos=r.nPhotos?await Store.photos(id):[];
+  for(const p of photos){try{const b=await (await fetch(p.data)).blob();p.data=await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(b)})}catch(e){}}
+  const byKey={};photos.forEach(x=>(byKey[x.key]=byKey[x.key]||[]).push(x.data));
+  const ans=Object.fromEntries((r.answers||[]).map(a=>[a.k,a]));
+  const im=k=>(byKey[k]||[]).map(s=>`<img src="${s}">`).join("");
+  const col=["#2E7D4F","#B3261E","#5F6873"];
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(f.code)} – ${fmtDate(r.data)}</title><style>body{font:14px/1.5 Arial,sans-serif;color:#1E2A33;max-width:900px;margin:24px auto;padding:0 16px}h1{margin:0;font-size:24px}h2{font-size:17px;margin:22px 0 8px;border-bottom:2px solid #A53D03;padding-bottom:4px}table{width:100%;border-collapse:collapse}td{border-bottom:1px solid #ddd;padding:6px 4px;vertical-align:top}td.r{width:130px;font-weight:bold;text-align:right}.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px 16px;margin-top:12px}.g span{display:block;font-size:12px;color:#5B6874}img{width:150px;height:150px;object-fit:cover;border-radius:6px;margin:4px 6px 0 0}.n{color:#5B6874;font-size:13px;white-space:pre-wrap}.res{display:inline-block;padding:4px 12px;border-radius:12px;background:#F6E6DB;color:#A53D03;font-weight:bold}</style></head><body>
+  <h1>${esc(f.code)} – ${esc(f.title)}</h1><div class="g">${Object.entries(r.fields).map(([k,v])=>`<div><span>${esc(k)}</span><b>${esc(Array.isArray(v)?v.join(", "):k==="Data"?fmtDate(v):v)}</b></div>`).join("")}</div>
+  <p><b>${r.c}</b> ${esc(f.opts[0])} · <b>${r.nc}</b> ${esc(f.opts[1])} · <b>${r.na}</b> N/A · Conformidade <b>${pctOf(r)??"—"}%</b> &nbsp; <span class="res">${esc(r.resultado||"")}</span></p>
+  ${f.sections.map((s,si)=>`<h2>${esc(s.name)}</h2><table>${s.items.map((q,ii)=>{const k=si+"-"+ii,a=ans[k];return`<tr><td>${esc(q)}${a?.note?`<div class="n">${esc(a.note)}</div>`:""}${im(k)}</td><td class="r" style="color:${col[a?.a??2]}">${a&&a.a!=null?esc(f.opts[a.a]):"—"}</td></tr>`}).join("")}</table>`).join("")}
+  <h2>Fechamento</h2>${f.final.map(fl=>`<p><b>${esc(fl.label)}:</b><br>${esc(r.final[fl.label]||"—").replace(/\n/g,"<br>")}</p>`).join("")}${(byKey.geral||[]).length?`<p><b>Fotos gerais</b><br>${im("geral")}</p>`:""}
+  <p class="n">Gerado pelo Inspeção Ativa em ${new Date().toLocaleString("pt-BR")}</p></body></html>`;
+  await saveFile(`${f.code.replace(/\s+/g,"")}_${r.data}_${(r.area||"inspecao").replace(/[^\wÀ-ú-]+/g,"_").slice(0,30)}.html`,html,"text/html");
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-act]");if(!t)return;
+  const act=t.dataset.act;
+  if(act==="bg"&&e.target!==t)return;
+  switch(act){
+    case"bg":case"close":closeModal();break;
+    case"profile":openProfile();break;
+    case"gestor":openLogin();break;
+    case"do-login":{const em=$("#l-em").value.trim(),pw=$("#l-pw").value;if(!em||!pw){$("#l-err").textContent="Informe e-mail e senha.";return}t.disabled=true;t.textContent="Entrando…";Store.login(em,pw).then(()=>{closeModal();toast("Modo gestor ativado");location.hash="#/dashboard";route()}).catch(err=>{t.disabled=false;t.textContent="Entrar";$("#l-err").textContent=err.message});break}
+    case"logout":e.preventDefault();Store.logout().then(()=>{toast("Você saiu do modo gestor");location.hash="#/checklists";route()});break;
+    case"save-profile":profile={nome:$("#p-nome").value.trim(),matricula:$("#p-mat").value.trim(),contrato:$("#p-con").value.trim()};LS.set("ia_profile",profile);paintProfile();closeModal();toast("Perfil salvo");break;
+    case"range":dashRange=+t.dataset.d;viewDash();break;
+    case"toggle-sec":{const si=t.dataset.si;const sec=t.closest(".sec");const closed=!sec.classList.contains("closed");sec.classList.toggle("closed",closed);t.setAttribute("aria-expanded",!closed);cur.open[si]=!closed;saveDraft();break}
+    case"toggle-dsec":t.closest(".sec").classList.toggle("closed");break;
+    case"ans":{const k=t.dataset.k,oi=+t.dataset.oi;cur.ans[k]=cur.ans[k]===oi?undefined:oi;if(cur.ans[k]===undefined)delete cur.ans[k];refreshItem(k);saveDraft();if(oi===1&&cur.ans[k]===1){const ta=document.querySelector(`[data-note="${k}"]`);ta&&ta.focus({preventScroll:true})}break}
+    case"extra":{const k=t.dataset.k;cur.open["x"+k]=!(document.querySelector(`#it-${k} .extra`).classList.contains("show"));refreshItem(k);break}
+    case"all-ok":{const si=+t.dataset.si;FM[cur.formId].sections[si].items.forEach((_,ii)=>{const k=si+"-"+ii;if(cur.ans[k]==null){cur.ans[k]=0;}});renderKeepScroll();saveDraft();break}
+    case"final":{const fl=FM[cur.formId].final[+t.dataset.i];cur.final[fl.label]=fl.options[+t.dataset.oi];t.parentElement.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b===t));t.parentElement.classList.remove("miss");saveDraft();break}
+    case"multi":{const fl=FM[cur.formId].fields[+t.dataset.fi];const o=fl.options[+t.dataset.oi];const arr=cur.fields[fl.label];const i=arr.indexOf(o);i>=0?arr.splice(i,1):arr.push(o);t.classList.toggle("on",i<0);saveDraft();break}
+    case"add-ph":phTarget=t.dataset.k;$("#file").click();break;
+    case"rm-ph":{const k=t.dataset.k;cur.photos[k].splice(+t.dataset.i,1);if(k==="geral")$("#th-geral").innerHTML=thumbs("geral",cur.photos.geral,MAX_GERAL_PH);else refreshItem(k);saveDraft();break}
+    case"zoom":lightbox(t.src);break;
+    case"submit":submit(t);break;
+    case"discard":modal(`<h2>Descartar este preenchimento?</h2><p>As respostas e fotos deste checklist serão apagadas. Inspeções já registradas não são afetadas.</p><div class="acts"><button class="btn" data-act="close">Continuar preenchendo</button><button class="btn pri" data-act="do-discard">Descartar</button></div>`);break;
+    case"do-discard":LS.del("ia_draft_"+cur.formId);cur=null;closeModal();location.hash="#/checklists";break;
+    case"csv":exportCsv();break;
+    case"refresh":Store.load().then(route);break;
+    case"report":exportReport(t.dataset.id);break;
+    case"print":document.querySelectorAll(".sec.closed").forEach(s=>s.classList.remove("closed"));setTimeout(()=>window.print(),100);break;
+    case"del":modal(`<h2>Excluir inspeção?</h2><p>A inspeção e suas fotos serão apagadas de forma definitiva. Digite <b>EXCLUIR</b> para confirmar.</p><input class="inp" id="del-c" autocomplete="off"><div class="acts"><button class="btn" data-act="close">Cancelar</button><button class="btn pri" data-act="do-del" data-id="${t.dataset.id}">Excluir definitivamente</button></div>`);break;
+    case"do-del":{if($("#del-c").value.trim().toUpperCase()!=="EXCLUIR"){$("#del-c").classList.add("miss");return}const r=Store.list.find(x=>x.id===t.dataset.id);closeModal();Store.remove(t.dataset.id).then(()=>{toast("Inspeção excluída");location.hash="#/inspecoes"}).catch(()=>toast("Não foi possível excluir. Verifique sua permissão."));break}
+  }
+});
+function renderKeepScroll(){const y=window.scrollY;renderForm();window.scrollTo(0,y)}
+document.addEventListener("input",e=>{
+  const t=e.target;if(!cur)return;
+  if(t.dataset.field!=null){cur.fields[t.dataset.field]=t.value;t.classList.remove("miss");saveDraft()}
+  else if(t.dataset.note!=null){cur.notes[t.dataset.note]=t.value;saveDraft()}
+  else if(t.dataset.finaltext!=null){cur.final[t.dataset.finaltext]=t.value;t.classList.remove("miss");saveDraft()}
+});
+document.addEventListener("change",e=>{const t=e.target;if(cur&&t.tagName==="SELECT"&&t.dataset.field!=null){cur.fields[t.dataset.field]=t.value;t.classList.remove("miss");saveDraft()}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();if(e.key==="Enter"&&$("#l-pw")&&document.activeElement&&document.activeElement.closest(".modal")){const b=document.querySelector('[data-act="do-login"]');b&&b.click()}});
+window.addEventListener("hashchange",route);
+paintProfile();
+Store.init().then(route);
+</script>
+</body>
+</html>
